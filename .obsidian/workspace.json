@@ -4,21 +4,17 @@
     "type": "split",
     "children": [
       {
-        "id": "0191866cebf1b7c3",
+        "id": "9cbd1ceb1a918f9f",
         "type": "tabs",
         "children": [
           {
-            "id": "60ccb8b74e272dda",
+            "id": "cdc5194453edfa5a",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-                "file": "README.md",
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-              "title": "README"
+              "title": "New tab"
             }
           }
         ]
@@ -94,7 +90,6 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "README.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -104,7 +99,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for README"
+              "title": "Backlinks"
             }
           },
           {
@@ -142,16 +137,17 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "README.md",
+                "file": "Untitled.base",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of README"
+              "title": "Outline of Untitled"
             }
           }
-        ]
+        ],
+        "currentTab": 2
       }
     ],
     "direction": "horizontal",
@@ -169,8 +165,16 @@
       "bases:Create new base": false
     }
   },
-  "active": "60ccb8b74e272dda",
+  "active": "9b42b4503c7d88ad",
   "lastOpenFiles": [
+    "Untitled.canvas",
+    "Untitled.base",
+    "design/learning/understanding-concepts.md",
+    "context/design/learning/understanding-concepts.md/20251010_122257.28780b0c.md",
+    "context/design/learning/understanding-concepts.md/steps/response.a194cbeb.md",
+    "context/design/learning/understanding-concepts.md/20251010_122237.5bf4e7e4.md",
+    "context/design/learning/understanding-concepts.md/steps/question.32678935.md",
+    "design/brainstorming/questioning.md",
     "README.md"
   ]
 }
