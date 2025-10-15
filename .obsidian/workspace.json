@@ -1,0 +1,209 @@
+{
+  "main": {
+    "id": "69418d7ea6aabd56",
+    "type": "split",
+    "children": [
+      {
+        "id": "058c3c8bcc5c6ba9",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "15b82e147f4d6b86",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "New tab"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "ec24c9d8c578d7c4",
+    "type": "split",
+    "children": [
+      {
+        "id": "4734149109f01b21",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "9b42b4503c7d88ad",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "91b6b6a68ddda469",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "dd33aa2dc5ea9444",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "ffc60e9763cc384c",
+    "type": "split",
+    "children": [
+      {
+        "id": "d3c060c350ac362f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "a3cf4594c06125f1",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "design/concepts/SwapSuggestions/implementation.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for implementation"
+            }
+          },
+          {
+            "id": "5954b06acde07646",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "README.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from README"
+            }
+          },
+          {
+            "id": "bb5529fce9138644",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "0632f167ef7438ee",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "design/concepts/SwapSuggestions/implementation.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of implementation"
+            }
+          }
+        ],
+        "currentTab": 2
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "15b82e147f4d6b86",
+  "lastOpenFiles": [
+    "src/concepts/SwapSuggestions/SwapSuggestionsSpecification.md",
+    "src/concepts/SwapSuggestions/SwapSuggestionsConsoleOutput.md",
+    "src/concepts/SwapSuggestions/SwapSuggestionsConcept.ts",
+    "src/concepts/SwapSuggestions/SwapSuggestionsConcept.test.ts",
+    "src/concepts/SwapSuggestions/SwapSuggestionsChanges.md",
+    "src/concepts/SwapSuggestions",
+    "src/concepts/QuickCheckIns/QuickCheckInsSpecification.md",
+    "src/concepts/QuickCheckIns/QuickCheckInsConsoleOutput.md",
+    "src/concepts/QuickCheckIns/QuickCheckInsConcept.ts",
+    "src/concepts/QuickCheckIns/QuickCheckInsConcept.test.ts",
+    "src/concepts/QuickCheckIns/QuickCheckInsChanges.md",
+    "src/concepts/QuickCheckIns",
+    "src/concepts/PersonalQA/PersonalQASpecification.md",
+    "src/concepts/PersonalQA/PersonalQAConsoleOutput.md",
+    "src/concepts/PersonalQA/PersonalQAConcept.ts",
+    "src/concepts/PersonalQA/PersonalQAConcept.test.ts",
+    "src/concepts/PersonalQA/PersonalQAChanges.md",
+    "src/concepts/PersonalQA",
+    "src/concepts/MealLog/MealLogSpecification.md",
+    "src/concepts/MealLog/MealLogConsoleOutput.md",
+    "src/concepts/MealLog/MealLogConcept.ts",
+    "src/concepts/MealLog/MealLogChanges.md",
+    "src/concepts/InsightMining/InsightMiningSpecification.md",
+    "src/concepts/InsightMining/InsightMiningConsoleOutput.md",
+    "src/concepts/InsightMining/InsightMiningChanges.md",
+    "design/brainstorming/syncs.md",
+    "context/design/tools/api-extraction-from-spec.md/steps/prompt.2e341510.md",
+    "context/design/tools/api-extraction-from-spec.md/steps/_.70b30df5.md",
+    "context/design/tools/api-extraction-from-spec.md/steps/_.3731a859.md",
+    "context/design/tools/api-extraction-from-code.md/steps/prompt.efe0c8e1.md",
+    "context/design/tools/api-extraction-from-code.md/steps/prompt.2e341510.md",
+    "context/design/tools/api-extraction-from-code.md/steps/file.f007798c.md",
+    "context/design/tools/api-extraction-from-code.md/steps/approach.5df2171f.md",
+    "context/design/tools/api-extraction-from-code.md/steps/_.db39d951.md",
+    "context/design/tools/api-extraction-from-code.md/steps/_.92ef9357.md",
+    "context/design/tools/api-extraction-from-code.md/steps/_.70b30df5.md",
+    "Untitled.canvas"
+  ]
+}
