@@ -1,0 +1,27 @@
+Principle: User records, views, edits, and deletes a meal log ... ok (802ms)
+Action: submit - requires owner exists and items is nonempty ...
+  should return error if items is empty ... ok (2ms)
+  should return error if items is undefined/null ... ok (1ms)
+Action: submit - requires owner exists and items is nonempty ... ok (554ms)
+Action: edit - requirements and effects ...
+  should return error if meal does not exist ... ok (22ms)
+  should return error if caller is not the owner ... ok (19ms)
+  should return error if meal status is not active ... ok (87ms)
+  should return error if updated items array is empty ... ok (19ms)
+  should update notes correctly ... ok (57ms)
+  should update items correctly ... ok (64ms)
+Action: edit - requirements and effects ... ok (841ms)
+Action: delete - requirements and effects ...
+  should return error if meal does not exist ... ok (18ms)
+  should return error if caller is not the owner ... ok (17ms)
+  should set status to DELETED on success ... ok (53ms)
+  should return error if meal status is already deleted ... ok (17ms)
+Action: delete - requirements and effects ... ok (585ms)
+Query: getMealsForOwner and getMealById access controls ...
+  getMealsForOwner should retrieve only active meals by default ... ok (34ms)
+  getMealsForOwner should include deleted meals when specified ... ok (59ms)
+  getMealById should return undefined for non-existent meal ... ok (18ms)
+  getMealById should allow owner to access their meal ... ok (17ms)
+  getMealById should throw PermissionError for non-owner accessing a meal ... ok (17ms)
+  getMealById without callerId should retrieve meal (for internal use/admin) ... ok (16ms)
+Query: getMealsForOwner and getMealById access controls ... ok (754ms)
