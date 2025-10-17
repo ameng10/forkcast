@@ -1,3 +1,12 @@
+---
+timestamp: 'Fri Oct 17 2025 14:26:00 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251017_142600.4e6e0127.md]]'
+content_id: a90b357cfee565902929db6876eb04bddaa9f3d4ef2a3bce67e3c1abfff30e68
+---
+
+# file: src/QuickCheckIns/QuickCheckInsConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -109,10 +118,7 @@ export default class QuickCheckInsConcept {
     // Requires: no InternalMetric with 'name' exists
     const existingMetric = await this.internalMetrics.findOne({ name: name });
     if (existingMetric) {
-      return {
-        error:
-          `Metric with name '${name}' already exists with ID '${existingMetric._id}'.`,
-      };
+      return { error: `Metric with name '${name}' already exists with ID '${existingMetric._id}'.` };
     }
 
     // Effects: create a new InternalMetric 'metric' with a fresh ID, set its name, and return its ID.
@@ -162,9 +168,7 @@ export default class QuickCheckInsConcept {
 
     // Requires: if 'metric' is provided, then the InternalMetric 'metric' exists
     if (metric !== undefined) {
-      const existingMetric = await this.internalMetrics.findOne({
-        _id: metric,
-      });
+      const existingMetric = await this.internalMetrics.findOne({ _id: metric });
       if (!existingMetric) {
         return { error: `New metric with ID '${metric}' is not defined.` };
       }
@@ -237,3 +241,4 @@ export default class QuickCheckInsConcept {
     return await this.checkIns.find({ owner }).toArray();
   }
 }
+```
