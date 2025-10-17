@@ -4,7 +4,7 @@
 [@implementing-concepts](../../background/implementing-concepts.md)
 
 [@concept-state](../../background/detailed/concept-state.md)
-[@implementation 1](../LikertSurvey/implementation%201.md)
+[@implementation](../LikertSurvey/implementation%201.md)
 
 
 # implement: PersonalQA using the following framework. Fix any formatting and modularity issues and make sure the specification matches code made. Write the code in typescript. Edit the code to use asyncs when needed.
@@ -390,4 +390,3 @@ demonstratePersonalQA();
 ```
 
 # response:
-
