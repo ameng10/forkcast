@@ -1,38 +1,304 @@
 [@concept-design-brief](../../background/concept-design-brief.md)
+
 [@concept-design-overview](../../background/concept-design-overview.md)
+
 [@concept-specifications](../../background/concept-specifications.md)
+
 [@implementing-concepts](../../background/implementing-concepts.md)
 
 [@concept-state](../../background/detailed/concept-state.md)
 
-# implement: QuickCheckIns using the following framework. Make sure the specifications follow the concept framework. Fix any formatting and modularity issues and make sure the specification matches code made. Write the code in typescript. Use asyncs when needed.
+[@QuickCheckInsSpecification](../../../src/concepts/QuickCheckIns/QuickCheckInsSpecification.md)
 
-### Concept: QuickCheckIns [User, Metric]
-
-**purpose** Record simple self-reports to correlate with recent meals.
-
-**principle** A user logs outcomes such as energy, mood, or gut comfort as numeric values at times; this concept stores facts only.
-
-**state**
-
-- A set of CheckIns with:
-    - owner: User
-    - at: Time
-    - metric: Metric (e.g., energy, mood, gut_discomfort)
-    - value: Number
-
-**actions**
-
-- `record(owner: User, at: Time, metric: Metric, value: Number): (checkIn: CheckIn)`
-
-    - **requires:** owner exists and metric is allowed
-    - **effects:** create a check-in and return it
-- `defineMetric(metric: Metric)`
-
-    - **effects:** register a new allowed metric
-- `edit(checkIn: CheckIn, metric?: Metric, value?: Number)`
-
-    - **requires:** checkIn exists and caller is the owner
-    - **effects:** update provided fields (metric and/or value)
+# implement: QuickCheckIns using the attached context. Make sure the specifications follow the concept framework. Fix any formatting and modularity issues and make sure the specification matches code made. Write the code in typescript. Use asyncs when needed.
 
 # response:
+
+# response:
+
+```concept
+concept QuickCheckIns [User, ExternalMetricID]
+
+purpose Record simple self-reports to correlate with recent meals.
+
+principle A user logs outcomes such as energy, mood, or gut comfort as numeric values at times; this concept stores facts only.
+
+state
+  a set of CheckIns with
+    an owner User
+    an at DateTime
+    a metric ExternalMetricID
+    a value Number
+
+  a set of InternalMetrics with
+    a name String
+
+actions
+
+  record (owner: User, at: DateTime, metric: ExternalMetricID, value: Number): (checkIn: CheckIn)
+    requires
+      the InternalMetric 'metric' exists // refers to an InternalMetric whose _id matches 'metric'
+    effects
+      create a new CheckIn 'checkIn'
+      set owner of 'checkIn' to 'owner'
+      set at of 'checkIn' to 'at'
+      set metric of 'checkIn' to 'metric'
+      set value of 'checkIn' to 'value'
+      return 'checkIn'
+
+  defineMetric (name: String): (metric: ExternalMetricID)
+    requires
+      no InternalMetric with 'name' exists
+    effects
+      create a new InternalMetric 'metric' with a fresh ID
+      set name of 'metric' to 'name'
+      return the ID of the new 'metric'
+
+  edit (checkIn: CheckIn, owner: User, metric?: ExternalMetricID, value?: Number): Empty
+    requires
+      the CheckIn 'checkIn' exists
+      owner of 'checkIn' is 'owner'
+      if 'metric' is provided, then the InternalMetric 'metric' exists
+    effects
+      if 'metric' is provided, update metric of 'checkIn' to 'metric'
+      if 'value' is provided, update value of 'checkIn' to 'value'
+```
+
+# file: src/QuickCheckIns/QuickCheckInsConcept.ts
+
+```typescript
+import { Collection, Db } from "npm:mongodb";
+import { Empty, ID } from "@utils/types.ts";
+import { freshID } from "@utils/database.ts";
+
+// Declare collection prefix, use concept name
+const PREFIX = "QuickCheckIns" + ".";
+
+// Generic types of this concept (User and ExternalMetricID are IDs, not objects with properties known by this concept)
+type User = ID;
+type ExternalMetricID = ID; // The ID type for metrics managed externally/globally
+
+// Internal entity types defined by the state of this concept
+type CheckIn = ID; // CheckIn is an internal ID managed by this concept
+
+/**
+ * @state a set of CheckIns with
+ *   an owner User
+ *   an at DateTime
+ *   a metric ExternalMetricID
+ *   a value Number
+ */
+interface CheckInDocument {
+  _id: CheckIn;
+  owner: User;
+  at: Date; // Using JavaScript's Date object for DateTime
+  metric: ExternalMetricID;
+  value: number;
+}
+
+/**
+ * @state a set of InternalMetrics with
+ *   a name String
+ * // Note: The _id of InternalMetrics will be of type ExternalMetricID
+ */
+interface InternalMetricDocument {
+  _id: ExternalMetricID; // The ID of the metric, which is of the generic type ExternalMetricID
+  name: string;
+}
+
+/**
+ * @concept QuickCheckIns [User, ExternalMetricID]
+ * @purpose Record simple self-reports to correlate with recent meals.
+ * @principle A user logs outcomes such as energy, mood, or gut comfort as numeric values at times; this concept stores facts only.
+ */
+export default class QuickCheckInsConcept {
+  checkIns: Collection<CheckInDocument>;
+  internalMetrics: Collection<InternalMetricDocument>;
+
+  constructor(private readonly db: Db) {
+    this.checkIns = this.db.collection(PREFIX + "checkIns");
+    this.internalMetrics = this.db.collection(PREFIX + "internalMetrics");
+  }
+
+  /**
+   * @action record
+   * @param {object} args - The action arguments.
+   * @param {User} args.owner - The user who owns this check-in.
+   * @param {Date} args.at - The date and time of the check-in.
+   * @param {ExternalMetricID} args.metric - The ID of the metric being reported (e.g., energy, mood).
+   * @param {number} args.value - The numeric value for the metric.
+   * @returns {Promise<{checkIn: CheckIn} | {error: string}>} The ID of the newly created check-in or an error message.
+   *
+   * @requires the InternalMetric 'metric' exists
+   * @effects create a new CheckIn 'checkIn', set its properties, and return its ID.
+   */
+  async record(
+    { owner, at, metric, value }: {
+      owner: User;
+      at: Date;
+      metric: ExternalMetricID;
+      value: number;
+    },
+  ): Promise<{ checkIn: CheckIn } | { error: string }> {
+    // Requires: the InternalMetric 'metric' exists
+    const existingMetric = await this.internalMetrics.findOne({ _id: metric });
+    if (!existingMetric) {
+      return { error: `Metric with ID '${metric}' is not defined.` };
+    }
+
+    // Effects: create a new CheckIn 'checkIn', set its properties, and return its ID.
+    const newCheckInId = freshID() as CheckIn;
+    const result = await this.checkIns.insertOne({
+      _id: newCheckInId,
+      owner,
+      at,
+      metric,
+      value,
+    });
+
+    if (!result.acknowledged) {
+      return { error: "Failed to create check-in." };
+    }
+
+    return { checkIn: newCheckInId };
+  }
+
+  /**
+   * @action defineMetric
+   * @param {object} args - The action arguments.
+   * @param {string} args.name - The descriptive name for the new metric.
+   * @returns {Promise<{metric: ExternalMetricID} | {error: string}>} The ID of the newly defined metric or an error message.
+   *
+   * @requires no InternalMetric with 'name' exists
+   * @effects create a new InternalMetric 'metric' with a fresh ID, set its name, and return its ID.
+   */
+  async defineMetric(
+    { name }: { name: string },
+  ): Promise<{ metric: ExternalMetricID } | { error: string }> {
+    // Requires: no InternalMetric with 'name' exists
+    const existingMetric = await this.internalMetrics.findOne({ name: name });
+    if (existingMetric) {
+      return { error: `Metric with name '${name}' already exists with ID '${existingMetric._id}'.` };
+    }
+
+    // Effects: create a new InternalMetric 'metric' with a fresh ID, set its name, and return its ID.
+    const newMetricId = freshID() as ExternalMetricID;
+    const result = await this.internalMetrics.insertOne({
+      _id: newMetricId,
+      name: name,
+    });
+
+    if (!result.acknowledged) {
+      return { error: "Failed to define metric." };
+    }
+
+    return { metric: newMetricId };
+  }
+
+  /**
+   * @action edit
+   * @param {object} args - The action arguments.
+   * @param {CheckIn} args.checkIn - The ID of the check-in to edit.
+   * @param {User} args.owner - The user attempting to edit (must be the owner of the check-in).
+   * @param {ExternalMetricID} [args.metric] - Optional new metric ID to update.
+   * @param {number} [args.value] - Optional new numeric value to update.
+   * @returns {Promise<Empty | {error: string}>} An empty object on success or an error message.
+   *
+   * @requires the CheckIn 'checkIn' exists, owner of 'checkIn' is 'owner', and if 'metric' is provided, then the InternalMetric 'metric' exists.
+   * @effects update provided fields (metric and/or value) of 'checkIn'.
+   */
+  async edit(
+    { checkIn, owner, metric, value }: {
+      checkIn: CheckIn;
+      owner: User;
+      metric?: ExternalMetricID;
+      value?: number;
+    },
+  ): Promise<Empty | { error: string }> {
+    // Requires: the CheckIn 'checkIn' exists
+    const existingCheckIn = await this.checkIns.findOne({ _id: checkIn });
+    if (!existingCheckIn) {
+      return { error: `Check-in with ID '${checkIn}' not found.` };
+    }
+
+    // Requires: owner of 'checkIn' is 'owner'
+    if (existingCheckIn.owner !== owner) {
+      return { error: "You are not the owner of this check-in." };
+    }
+
+    // Requires: if 'metric' is provided, then the InternalMetric 'metric' exists
+    if (metric !== undefined) { // Use !== undefined to allow `null` as a valid passed value for `metric` if desired in future.
+      const existingMetric = await this.internalMetrics.findOne({ _id: metric });
+      if (!existingMetric) {
+        return { error: `New metric with ID '${metric}' is not defined.` };
+      }
+    }
+
+    // Effects: update provided fields (metric and/or value) of 'checkIn'.
+    const updateDoc: Partial<CheckInDocument> = {};
+    if (metric !== undefined) {
+      updateDoc.metric = metric;
+    }
+    if (value !== undefined) {
+      updateDoc.value = value;
+    }
+
+    if (Object.keys(updateDoc).length === 0) {
+      // No fields to update, return success as per spec
+      return {};
+    }
+
+    const result = await this.checkIns.updateOne(
+      { _id: checkIn },
+      { $set: updateDoc },
+    );
+
+    if (!result.acknowledged || result.matchedCount === 0) {
+      return { error: "Failed to update check-in." };
+    }
+
+    return {};
+  }
+
+  // --- Queries (Optional, but good for testing and verifying state) ---
+
+  /**
+   * @query _getCheckIn
+   * @param {object} args - The query arguments.
+   * @param {CheckIn} args.checkIn - The ID of the check-in to retrieve.
+   * @returns {Promise<CheckInDocument | null>} A specific check-in document by its ID, or null if not found.
+   * @effects Returns a specific check-in document by its ID.
+   */
+  async _getCheckIn(
+    { checkIn }: { checkIn: CheckIn },
+  ): Promise<CheckInDocument | null> {
+    return await this.checkIns.findOne({ _id: checkIn });
+  }
+
+  /**
+   * @query _getMetricsByName
+   * @param {object} args - The query arguments.
+   * @param {string} args.name - The name of the internal metric to retrieve.
+   * @returns {Promise<InternalMetricDocument | null>} An internal metric document by its name, or null if not found.
+   * @effects Returns an internal metric document by its name.
+   */
+  async _getMetricsByName(
+    { name }: { name: string },
+  ): Promise<InternalMetricDocument | null> {
+    return await this.internalMetrics.findOne({ name: name });
+  }
+
+  /**
+   * @query _listCheckInsByOwner
+   * @param {object} args - The query arguments.
+   * @param {User} args.owner - The owner whose check-ins are to be listed.
+   * @returns {Promise<CheckInDocument[]>} An array of all check-ins belonging to a specific owner.
+   * @effects Returns all check-ins belonging to a specific owner.
+   */
+  async _listCheckInsByOwner(
+    { owner }: { owner: User },
+  ): Promise<CheckInDocument[]> {
+    return await this.checkIns.find({ owner }).toArray();
+  }
+}
+```

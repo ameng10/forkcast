@@ -1,3 +1,12 @@
+---
+timestamp: 'Fri Oct 17 2025 14:32:29 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251017_143229.e0273ac7.md]]'
+content_id: d18138754daa472b1c5bb570062fadcb94b6a5a86b5033cc7650b95edfefbab2
+---
+
+# file: src/QuickCheckIns/QuickCheckInsConcept.ts
+
+```typescript
 import { Collection, Db } from "npm:mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
@@ -109,10 +118,7 @@ export default class QuickCheckInsConcept {
     // Requires: no InternalMetric with 'name' exists
     const existingMetric = await this.internalMetrics.findOne({ name: name });
     if (existingMetric) {
-      return {
-        error:
-          `Metric with name '${name}' already exists with ID '${existingMetric._id}'.`,
-      };
+      return { error: `Metric with name '${name}' already exists with ID '${existingMetric._id}'.` };
     }
 
     // Effects: create a new InternalMetric 'metric' with a fresh ID, set its name, and return its ID.
@@ -161,10 +167,8 @@ export default class QuickCheckInsConcept {
     }
 
     // Requires: if 'metric' is provided, then the InternalMetric 'metric' exists
-    if (metric !== undefined) {
-      const existingMetric = await this.internalMetrics.findOne({
-        _id: metric,
-      });
+    if (metric !== undefined) { // Use !== undefined to allow `null` as a valid passed value for `metric` if desired in future.
+      const existingMetric = await this.internalMetrics.findOne({ _id: metric });
       if (!existingMetric) {
         return { error: `New metric with ID '${metric}' is not defined.` };
       }
@@ -237,3 +241,32 @@ export default class QuickCheckInsConcept {
     return await this.checkIns.find({ owner }).toArray();
   }
 }
+```
+
+Principle: User records, views, edits, and deletes a meal log ... ok (802ms)
+Action: submit - requires owner exists and items is nonempty ...
+should return error if items is empty ... ok (2ms)
+should return error if items is undefined/null ... ok (1ms)
+Action: submit - requires owner exists and items is nonempty ... ok (554ms)
+Action: edit - requirements and effects ...
+should return error if meal does not exist ... ok (22ms)
+should return error if caller is not the owner ... ok (19ms)
+should return error if meal status is not active ... ok (87ms)
+should return error if updated items array is empty ... ok (19ms)
+should update notes correctly ... ok (57ms)
+should update items correctly ... ok (64ms)
+Action: edit - requirements and effects ... ok (841ms)
+Action: delete - requirements and effects ...
+should return error if meal does not exist ... ok (18ms)
+should return error if caller is not the owner ... ok (17ms)
+should set status to DELETED on success ... ok (53ms)
+should return error if meal status is already deleted ... ok (17ms)
+Action: delete - requirements and effects ... ok (585ms)
+Query: getMealsForOwner and getMealById access controls ...
+getMealsForOwner should retrieve only active meals by default ... ok (34ms)
+getMealsForOwner should include deleted meals when specified ... ok (59ms)
+getMealById should return undefined for non-existent meal ... ok (18ms)
+getMealById should allow owner to access their meal ... ok (17ms)
+getMealById should throw PermissionError for non-owner accessing a meal ... ok (17ms)
+getMealById without callerId should retrieve meal (for internal use/admin) ... ok (16ms)
+Query: getMealsForOwner and getMealById access controls ... ok (754ms)
