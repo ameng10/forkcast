@@ -15,12 +15,13 @@
               "state": {},
               "type": "markdown",
               "state": {
-                "file": "design/concepts/PersonalQA/testing.md",
+                "file": "design/concepts/QuickCheckIns/implementation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
               "title": "New tab"
+              "title": "implementation"
             }
           }
         ]
@@ -96,8 +97,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "design/concepts/SwapSuggestions/implementation.md",
-                "file": "design/concepts/PersonalQA/testing.md",
+                "file": "design/concepts/QuickCheckIns/implementation.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -107,6 +107,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
+              "title": "Backlinks for implementation"
               "title": "Backlinks for implementation"
             }
           },
@@ -145,13 +146,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "design/concepts/SwapSuggestions/implementation.md",
-                "file": "design/concepts/PersonalQA/testing.md",
+                "file": "design/concepts/QuickCheckIns/implementation.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
+              "title": "Outline of implementation"
               "title": "Outline of implementation"
             }
           }
@@ -176,6 +177,10 @@
   },
   "active": "15b82e147f4d6b86",
   "lastOpenFiles": [
+    "design/concepts/PersonalQA/testing.md",
+    "design/concepts/QuickCheckIns/testing.md",
+    "design/concepts/QuickCheckIns/implementation.md",
+    "design/concepts/QuickCheckIns",
     "src/concepts/PersonalQA/PersonalQAConcept.test.ts",
     "context/design/concepts/PersonalQA/testing.md/20251016_225607.63a72041.md",
     "context/design/concepts/PersonalQA/testing.md/steps/file.e02f7094.md",
@@ -183,35 +188,22 @@
     "context/design/concepts/PersonalQA/testing.md/20251016_225524.c65b352e.md",
     "context/design/concepts/PersonalQA/testing.md/steps/test.07d5cd3d.md",
     "context/design/concepts/PersonalQA/testing.md/steps/response.d3cc4eda.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/implement.ef192ffa.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/Concept State.28ab7cd0.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/_.7386b874.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/trace.e9db0ffb.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/file.1aabccc1.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/test.a05b34aa.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/_.eb4d1820.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/approach.3e0d5a8f.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/_.ae61325b.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/file.11edfed3.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/concept.7f5806fa.md",
     "context/design/concepts/PersonalQA/testing.md/steps/response.6d76b65d.md",
+    "context/design/concepts/PersonalQA/testing.md/steps/implement.ef192ffa.md",
     "context/design/concepts/PersonalQA/testing.md/steps/implement.36ad48d6.md",
     "context/design/concepts/PersonalQA/testing.md/steps/_.2086d81d.md",
     "context/design/concepts/PersonalQA/testing.md/steps/_.db39d951.md",
     "context/design/concepts/PersonalQA/testing.md/steps/_.331f5a1f.md",
     "context/design/concepts/PersonalQA/testing.md/steps/_.04e090af.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/Generic Parameters.087161ea.md",
-    "context/design/concepts/PersonalQA/testing.md/steps/approach.5df2171f.md",
     "context/design/concepts/PersonalQA/testing.md/steps",
     "context/design/concepts/PersonalQA/implementation.md/steps",
+    "context/design/concepts/PersonalQA/testing.md/steps",
     "context/design/concepts/PersonalQA",
-    "design/concepts/PersonalQA",
-    "context/design/concepts/MealLog/testing.md/steps",
+    "design/concepts/MealLog",
     "context/design/concepts/MealLog/implementation.md/steps",
+    "context/design/concepts/MealLog/testing.md/steps",
     "context/design/concepts/MealLog",
     "design/concepts/MealLog",
-    "context/design/brainstorming/MealLogBrainstorm.md/steps",
-    "Untitled.base",
     "Untitled.canvas"
   ]
 }
