@@ -341,12 +341,4 @@ Deno.test("Query: getMealsForOwner and getMealById access controls", async (t) =
             // This behavior is allowed by the current implementation (callerId is optional).
             // In a real app, external APIs would still enforce callerId.
             const meal = await mealLogConcept.getMealById(aliceMeal2.id);
-            assertExists(meal, "Meal should be retrievable without callerId (e.g., for internal admin)");
-            assertEquals(meal?.id, aliceMeal2.id);
-        });
-
-    } finally {
-        await mealLogConcept.disconnect();
-    }
-});
-```
+            assertExists(
