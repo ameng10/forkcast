@@ -5,22 +5,24 @@
     "children": [
       {
         "id": "058c3c8bcc5c6ba9",
+        "id": "12de83941da5b111",
         "type": "tabs",
         "children": [
           {
             "id": "15b82e147f4d6b86",
+            "id": "1528ccc6e892a135",
             "type": "leaf",
             "state": {
               "type": "empty",
               "state": {},
               "type": "markdown",
               "state": {
-                "file": "design/concepts/QuickCheckIns/testing.md",
+                "file": "design/concepts/MealLog/MealLog.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "testing"
+              "title": "MealLog"
             }
           }
         ]
@@ -96,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "design/concepts/QuickCheckIns/testing.md",
+                "file": "design/concepts/MealLog/MealLog.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -106,7 +108,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for testing"
+              "title": "Backlinks for MealLog"
             }
           },
           {
@@ -144,13 +146,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "design/concepts/QuickCheckIns/testing.md",
+                "file": "design/concepts/MealLog/MealLog.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of testing"
+              "title": "Outline of MealLog"
             }
           }
         ],
@@ -173,7 +175,26 @@
     }
   },
   "active": "15b82e147f4d6b86",
+  "active": "1528ccc6e892a135",
   "lastOpenFiles": [
+    "design/concepts/PersonalQA/PersonalQA.md",
+    "design/concepts/MealLog/MealLog.md",
+    "src/concepts/QuickCheckIns/QuickCheckInsSpecification.md",
+    "design/concepts/QuickCheckIns/QuickCheckIns.md",
+    "design/concepts/MealLog/implementation.md",
+    "src/concepts/MealLog/MealLogSpecification.md",
+    "context/design/learning/exercise-0.md/steps/response.ffe56e33.md",
+    "context/design/learning/exercise-0.md/steps/response.ba909627.md",
+    "context/design/learning/exercise-0.md/steps/prompt.329ab9e7.md",
+    "context/design/learning/exercise-0.md/steps/Insert link to your own response to your question.2f3466a0.md",
+    "context/design/learning/exercise-0.md/steps/Insert link to the LLM response to your question.a639fc6c.md",
+    "context/design/learning/exercise-0.md/20251017_145116.78188929.md",
+    "context/design/learning/exercise-0.md/steps",
+    "context/design/learning/exercise-0.md",
+    "context/design/brainstorming/questioning.md/20251017_144951.daa31256.md",
+    "design/learning/exercise-0.md",
+    "context/design/brainstorming/questioning.md/steps/response.ffe56e33.md",
+    "design/concepts/QuickCheckIns/testing.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/20251017_143304.2c8a965b.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/file.e81b4071.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/20251017_143229.e0273ac7.md",
@@ -181,25 +202,8 @@
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/file.d1813875.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/Concept State.28ab7cd0.md",
     "src/concepts/MealLog/MealLogConsoleOutput.md",
-    "src/concepts/QuickCheckIns/QuickCheckInsSpecification.md",
-    "design/concepts/QuickCheckIns/testing.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/20251017_142600.4e6e0127.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/file.de5774ba.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/test.eb7a5d4c.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/file.a90b357c.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/concept.0844c2d5.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/20251017_142505.6b2c5488.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/test.87543249.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/20251017_141926.8a48978d.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/response.e3bf0cb9.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/20251017_141905.a0b78648.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/test.66693d92.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/file.d8c1f2f1.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/response.c45eb818.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/implement.479ae4c2.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/Concept State.82bcbcc6.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/_.7386b874.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps/trace.e9db0ffb.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/implementation.md/steps",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns",
@@ -209,7 +213,6 @@
     "context/Users/anthonymeng10/Desktop",
     "context/Users/anthonymeng10",
     "context/Users",
-    "design/concepts/QuickCheckIns",
     "Untitled.canvas"
   ]
 }
