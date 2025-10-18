@@ -177,6 +177,9 @@
   "active": "15b82e147f4d6b86",
   "active": "1528ccc6e892a135",
   "lastOpenFiles": [
+    "design/concepts/SwapSuggestions/testing.md",
+    "design/concepts/SwapSuggestions/implementation.md",
+    "design/concepts/SwapSuggestions",
     "context/design/concepts/InsightMining/testing.md/20251018_184159.417723f7.md",
     "context/design/concepts/InsightMining/testing.md/steps/file.812cb6e5.md",
     "context/design/concepts/InsightMining/testing.md/steps/response.223a761b.md",
@@ -201,8 +204,6 @@
     "context/design/concepts/InsightMining/testing.md/steps/response.3518cd41.md",
     "context/design/concepts/InsightMining/testing.md/20251018_181420.1fb1c0c7.md",
     "context/design/concepts/InsightMining/testing.md/20251018_181252.4a552a7c.md",
-    "context/design/concepts/InsightMining/testing.md/steps/file.06506926.md",
-    "context/design/concepts/InsightMining/testing.md/steps/response.cd548399.md",
     "context/design/concepts/InsightMining/testing.md/steps",
     "context/design/concepts/InsightMining/implementation.md/steps",
     "context/design/concepts/InsightMining",
@@ -212,7 +213,6 @@
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/implementation.md/steps",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts",
-    "context/Users/anthonymeng10/Desktop/forkcast/design",
     "Untitled.canvas"
   ]
 }

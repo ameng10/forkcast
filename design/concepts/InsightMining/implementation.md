@@ -489,3 +489,4 @@ interface ReportDoc {
     topHarmful?: Signal[]; // Optional: Signals associated with negative effects
     metricTrends?: Array<{ metric: Metric; value: number }>; // Optional: Average values for metrics over the period
 }
+```
