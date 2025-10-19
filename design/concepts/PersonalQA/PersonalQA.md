@@ -1,1 +1,1 @@
-[@PersonalQASpecification](../../../src/concepts/PersonalQA/PersonalQASpecification.md)
+![@PersonalQASpecification](../../../src/concepts/PersonalQA/PersonalQASpecification.md)

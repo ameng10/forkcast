@@ -1,24 +1,14 @@
-## InsightMining — Changes, fixes, and problems encountered (Oct 18, 2025)
+## InsightMining Concept Changes (Oct 19, 2025)
 
-Summary
--------
-This documents the edits, issues, and design decisions encountered while implementing and testing the `InsightMining` concept. It compares the specification, the TypeScript implementation in `src/concepts/InsightMining/InsightMiningConcept.ts`, and the test expectations in `src/concepts/InsightMining/InsightMiningConcept.test.ts`.
+### Interesting Moments
+1. **Deterministic insight identifiers** — Introduced a stable `createInsightKey` so repeated signal sets collapse into one document. [Snapshot](../../../context/design/concepts/InsightMining/implementation.md/steps/file.24a42d4b.md)
+2. **Grouping observations by signal sets** — Sorted and grouped signals plus metric to prevent duplicate aggregates. [Snapshot](../../../context/design/concepts/InsightMining/implementation.md/steps/file.24a42d4b.md)
+3. **Effect and confidence heuristics** — Captured the initial formulas that keep results bounded and testable. [Snapshot](../../../context/design/concepts/InsightMining/implementation.md/steps/file.24a42d4b.md)
+4. **Epsilon threshold for neutrality** — Added a small epsilon to ignore floating-point noise when classifying helpful vs harmful. [Snapshot](../../../context/design/concepts/InsightMining/testing.md/steps/response.223a761b.md)
+5. **Always returning helpful/harmful arrays** — Ensured summary outputs always expose array fields for downstream destructuring. [Snapshot](../../../context/design/concepts/InsightMining/testing.md/steps/response.223a761b.md)
+6. **Upsert flow for insight lifecycle** — Documented the Mongo upsert strategy that keeps updates idempotent. [Snapshot](../../../context/design/concepts/InsightMining/testing.md/steps/response.223a761b.md)
 
-Files inspected
-- `design/concepts/InsightMining/implementation.md` (design + expected behavior)
-- `src/concepts/InsightMining/InsightMiningSpecification.md` (formal spec)
-- `src/concepts/InsightMining/InsightMiningConcept.ts` (TypeScript implementation)
-- `src/concepts/InsightMining/InsightMiningConcept.test.ts` (tests)
-
-Major fixes and changes made in implementation
-- Deterministic insight IDs: implemented `createInsightKey(owner, signals, metric)` to upsert insights consistently (required by tests).
-- Analysis grouping: grouped observations by sorted signals + metric to compute per-combination insights.
-- Effect & confidence computation: implemented simple heuristics (effect = avg - 5, confidence = min(1, n/10)).
-- Summarize: ensured `topHelpful` and `topHarmful` are always arrays (possibly empty) so tests that assert existence pass even when there are no helpful/harmful signals.
-
-Problems encountered (and how they were resolved)
-- Tests expect deterministic insight counts and values. Ensured grouping and sorting of signals before computing keys so the same combinations map to one insight.
-- Floating point noise caused borderline zero-average signals to appear incorrectly; introduced an EPSILON (1e-9) threshold to treat near-zero averages as zero for helpful/harmful classification.
-- Some earlier drafts returned `topHelpful`/`topHarmful` only when non-empty; tests expected an array to exist even when empty, so the implementation now always returns arrays.
-- Report structure in tests expects `metricTrends` to be present and contain averages; ensured metric averaging logic includes all observations in the period.
-- Concurrency/mongo upsert: used `updateOne(..., { upsert: true })` to create/update insights stably.
+### Current State
+- Insight aggregation is deterministic thanks to sorted signal grouping and stable IDs.
+- Summary responses consistently include helpful/harmful arrays alongside effect/confidence heuristics.
+- Mongo writes rely on upserts to keep read-modify-write cycles resilient.
