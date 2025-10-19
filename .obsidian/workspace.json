@@ -17,12 +17,12 @@
               "state": {},
               "type": "markdown",
               "state": {
-                "file": "src/concepts/InsightMining/InsightMiningSpecification.md",
+                "file": "design/concepts/SwapSuggestions/implementation.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "InsightMiningSpecification"
+              "title": "implementation"
             }
           }
         ]
@@ -98,7 +98,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "src/concepts/InsightMining/InsightMiningSpecification.md",
+                "file": "design/concepts/SwapSuggestions/implementation.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -108,7 +108,7 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "Backlinks for InsightMiningSpecification"
+              "title": "Backlinks for implementation"
             }
           },
           {
@@ -146,13 +146,13 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "src/concepts/InsightMining/InsightMiningSpecification.md",
+                "file": "design/concepts/SwapSuggestions/implementation.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
               },
               "icon": "lucide-list",
-              "title": "Outline of InsightMiningSpecification"
+              "title": "Outline of implementation"
             }
           }
         ],
@@ -177,42 +177,42 @@
   "active": "15b82e147f4d6b86",
   "active": "1528ccc6e892a135",
   "lastOpenFiles": [
-    "design/concepts/SwapSuggestions/testing.md",
-    "design/concepts/SwapSuggestions/implementation.md",
+    "context/design/concepts/SwapSuggestions/testing.md/20251019_161324.bf30ce59.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/response.6c47249a.md",
+    "context/design/concepts/SwapSuggestions/testing.md/20251019_161130.e3dae545.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/test.7df337b2.md",
+    "context/design/concepts/SwapSuggestions/testing.md/20251019_160214.3be920ea.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/trace.d656036d.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/file.ad9731af.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/test.1f90a195.md",
+    "context/design/concepts/SwapSuggestions/testing.md/20251019_160122.777e2d0f.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/test.b90e9ded.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/solution.5c053e82.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/problem.25d75b61.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/response.faf8bdaa.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/implement.41ed7665.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/Concept State.4d6cb41d.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/_.7386b874.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/trace.e9db0ffb.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/file.1aabccc1.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/test.a05b34aa.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/_.eb4d1820.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/approach.3e0d5a8f.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/_.ae61325b.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/file.11edfed3.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/response.6d76b65d.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/implement.36ad48d6.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps/concept.7f5806fa.md",
+    "context/design/concepts/SwapSuggestions/testing.md/steps",
+    "context/design/concepts/SwapSuggestions/implementation.md/steps",
+    "context/design/concepts/SwapSuggestions",
     "design/concepts/SwapSuggestions",
-    "context/design/concepts/InsightMining/testing.md/20251018_184159.417723f7.md",
-    "context/design/concepts/InsightMining/testing.md/steps/file.812cb6e5.md",
-    "context/design/concepts/InsightMining/testing.md/steps/response.223a761b.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_184027.96c67436.md",
-    "context/design/concepts/InsightMining/testing.md/steps/test.6d644764.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_183621.884fb7ae.md",
-    "context/design/concepts/InsightMining/testing.md/steps/response.45757e43.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_183507.2ffce142.md",
-    "context/design/concepts/InsightMining/testing.md/steps/test.c0b47149.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_182908.d317134d.md",
-    "context/design/concepts/InsightMining/testing.md/steps/response.464b6e3a.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_182653.c3170fb8.md",
-    "context/design/concepts/InsightMining/testing.md/steps/file.7b315312.md",
-    "context/design/concepts/InsightMining/testing.md/steps/test.49d463ce.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_182141.756fd714.md",
-    "context/design/concepts/InsightMining/testing.md/steps/response.07d45782.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_182009.f5f8e751.md",
-    "context/design/concepts/InsightMining/testing.md/steps/test.b6a52719.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_181523.cf45b682.md",
-    "context/design/concepts/InsightMining/testing.md/steps/file.e4812881.md",
-    "context/design/concepts/InsightMining/testing.md/steps/file.de570e87.md",
-    "context/design/concepts/InsightMining/testing.md/steps/response.3518cd41.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_181420.1fb1c0c7.md",
-    "context/design/concepts/InsightMining/testing.md/20251018_181252.4a552a7c.md",
     "context/design/concepts/InsightMining/testing.md/steps",
     "context/design/concepts/InsightMining/implementation.md/steps",
     "context/design/concepts/InsightMining",
     "design/concepts/InsightMining",
     "context/design/learning/exercise-0.md/steps",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/testing.md/steps",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns/implementation.md/steps",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/QuickCheckIns",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts",
     "Untitled.canvas"
   ]
 }
