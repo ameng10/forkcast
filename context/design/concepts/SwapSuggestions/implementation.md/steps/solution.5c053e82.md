@@ -1,5 +1,20 @@
+---
+timestamp: 'Sun Oct 19 2025 15:57:41 GMT-0400 (Eastern Daylight Time)'
+parent: '[[../20251019_155741.15603ed7.md]]'
+content_id: 5c053e8221a4ba5a89348b6ca42c05376a219966d98d29d672c1622667c294d8
+---
+
+# solution:
+
+To safely access the `message` property (or any other property) from the `e` variable in a `catch` block, we need to first check if `e` is an instance of `Error`. If it is, we can then confidently access `e.message`. If it's not an `Error` object, we can convert it to a string using `String(e)` to provide a generic error message, ensuring the application doesn't crash due to type safety issues and still provides useful feedback.
+
+The updated `catch` blocks in both `propose` and `accept` actions now include this type-guarding logic.
+
+```typescript
+// file: src/SwapSuggestions/SwapSuggestionsConcept.ts
+
 import { Collection, Db } from "npm:mongodb";
-import { Empty, ID } from "@utils/types.ts";
+import { ID, Empty } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
 const PREFIX = "SwapSuggestions.";
@@ -109,3 +124,4 @@ export default class SwapSuggestionsConcept {
     return await this.proposals.find({ owner }).toArray();
   }
 }
+```
