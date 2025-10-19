@@ -1,1 +1,1 @@
-[@QuickCheckInsSpecification](../../../src/concepts/QuickCheckIns/QuickCheckInsSpecification.md)
+![@QuickCheckInsSpecification](../../../src/concepts/QuickCheckIns/QuickCheckInsSpecification.md)

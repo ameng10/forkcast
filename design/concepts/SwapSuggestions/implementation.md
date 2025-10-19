@@ -570,4 +570,3 @@ export default class SwapSuggestionsConcept {
     return await this.proposals.find({ owner }).toArray();
   }
 }
-```
