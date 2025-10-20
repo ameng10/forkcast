@@ -14,10 +14,12 @@ For our specific implementation, we will use MongoDB as the database. Each piece
 - **actions**: each action is a method of the same name, and takes in a dictionary with the keys described by the action parameters in the specification with the specified types
 - **queries**: potential queries are also methods, but must begin with an underscore `_`
 	- **Important:** queries MUST return an **array** of the type specified by the return signature
+- **queries**: potential queries are also methods, but must begin with an underscore `_`
+	- **Important:** queries MUST return an **array** of the type specified by the return signature
 
 ## Technology stack details
 
-- Make sure that each action/method preserves its **requires**, and performs the specified **effects** in terms of its updates on the MongoDB collection. 
+- Make sure that each action/method preserves its **requires**, and performs the specified **effects** in terms of its updates on the MongoDB collection.
 - It should be possible to confirm any expectations for what the state looks like when described in **effects** or **principle** using the chosen set of **queries**.
 - Use the Deno runtime to minimize setup, and qualified imports such as `import { Collection, Db } from "npm:mongodb";`
 
@@ -125,6 +127,13 @@ export default class LabelingConcept {
    *
    * **effects** ...
    */
+  /**
+   * createLabel (name: String)
+   *
+   * **requires** ...
+   *
+   * **effects** ...
+   */
   createLabel({ name }: { name: string }): Empty {
     // todo: create label
     return {};
@@ -136,10 +145,24 @@ export default class LabelingConcept {
    *
    * **effects** ...
    */
+  /**
+   * addLabel (item: Item, label: Label)
+   *
+   * **requires** ...
+   *
+   * **effects** ...
+   */
   addLabel({ item, label }: { item: Item; label: Label }): Empty {
     // todo: add label
     return {};
   }
+  /**
+   * deleteLabel (item: Item, label: Label)
+   *
+   * **requires** ...
+   *
+   * **effects** ...
+   */
   /**
    * deleteLabel (item: Item, label: Label)
    *
@@ -174,9 +197,10 @@ Queries always return an array of dictionaries so if the specification has this 
 
 ```
 \_query (a: A, b: B): (c: C)
+\_query (a: A, b: B): (error: string)
 ```
 
-the implementation should return an array of dictionaries each with a field called `c`. For example, given this state
+the implementation should return an array of dictionaries each with a field called `c` or, in the error case, a dictionary with a field `error` of type string. Note also that a query, unlike an action, can return a nested dictionary. For example, given this state
 
 ```
 	a set of Groups with
@@ -226,6 +250,18 @@ Every concept should have inline documentation and commenting:
 - Any testing should be guided by the principle.
 - Each action should state the requirements and effects, and tests should check that both work against variations.
 
+# Commenting
+
+Every action should have a comment including its signature, its requirements, and effects:
+```typescript
+  /**
+   * createLabel (name: String): (label: Label)
+   *
+   * **requires** no Label with the given `name` already exists
+   *
+   * **effects** creates a new Label `l`; sets the name of `l` to `name`; returns `l` as `label`
+   */
+```
 # Commenting
 
 Every action should have a comment including its signature, its requirements, and effects:
