@@ -172,6 +172,11 @@
   },
   "active": "1528ccc6e892a135",
   "lastOpenFiles": [
+    "src/concept_server.ts",
+    "design/tools/api-extraction-from-code.md",
+    "design/tools/api-extraction-from-spec.md",
+    "design/tools/api-extraction-from.md",
+    "design/tools",
     "design/learning/interesting_moments.md",
     "context/design/concepts/QuickCheckIns/testing.md/steps/trace.e9db0ffb.md",
     "context/design/concepts/QuickCheckIns/testing.md/steps/test.eb7a5d4c.md",
@@ -194,10 +199,6 @@
     "context/design/concepts/QuickCheckIns/testing.md/steps/concept.7f5806fa.md",
     "context/design/concepts/QuickCheckIns/testing.md/steps/concept.0844c2d5.md",
     "context/design/concepts/QuickCheckIns/testing.md/steps/approach.5df2171f.md",
-    "context/design/concepts/QuickCheckIns/testing.md/steps/approach.3e0d5a8f.md",
-    "context/design/concepts/QuickCheckIns/testing.md/steps/_.eb4d1820.md",
-    "context/design/concepts/QuickCheckIns/testing.md/steps/_.db39d951.md",
-    "context/design/concepts/QuickCheckIns/testing.md/steps/_.b0364a7a.md",
     "context/design/concepts/QuickCheckIns/testing.md/steps",
     "context/design/concepts/QuickCheckIns/implementation.md/steps",
     "context/design/concepts/QuickCheckIns",
@@ -207,7 +208,6 @@
     "design/concepts/SwapSuggestions",
     "context/design/concepts/InsightMining/testing.md/steps",
     "context/design/concepts/InsightMining/implementation.md/steps",
-    "context/design/concepts/InsightMining",
     "Untitled.canvas"
   ]
 }
