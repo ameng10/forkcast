@@ -175,6 +175,7 @@
   "active": "15b82e147f4d6b86",
   "active": "9b42b4503c7d88ad",
   "lastOpenFiles": [
+    "design/concepts/api-spec.md",
     "context/design/concepts/api-specs.md/20251021_160246.00795e07.md",
     "context/design/concepts/api-specs.md/steps/API Specification.0700beab.md",
     "context/design/concepts/api-specs.md/steps/API Specification.b7381b49.md",
@@ -200,7 +201,6 @@
     "context/design/concepts/api-specs.md/steps/_.534e93ad.md",
     "context/design/concepts/api-specs.md/steps/_.3a59af90.md",
     "context/design/concepts/api-specs.md/steps/_.331f5a1f.md",
-    "context/design/concepts/api-specs.md/steps/Generic Parameters.087161ea.md",
     "context/design/concepts/api-specs.md/steps",
     "context/design/concepts/api-spec.md/steps",
     "context/deno.json",

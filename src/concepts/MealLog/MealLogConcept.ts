@@ -1,6 +1,13 @@
 // --- Required Imports ---
-import { Collection, Document, MongoClient, WithId } from "npm:mongodb"; // MongoDB driver
-import { ID } from "@utils/types.ts";
+import { Collection, Document, MongoClient, WithId } from "mongodb"; // MongoDB driver
+import { Empty, ID } from "@utils/types.ts";
+
+// Minimal database interface used when instantiated with a Db from the server
+interface MinimalDb {
+  collection<T extends Document = Document>(name: string): Collection<T>;
+  databaseName?: string;
+  name?: string;
+}
 
 // --- Generic Type Definitions ---
 // These interfaces define the minimal structure required for generic User and FoodItem types.
@@ -172,8 +179,9 @@ class Meal<U extends User, F extends FoodItem> {
  * persisted in MongoDB. It ensures that actions adhere to the defined requirements and effects.
  */
 export class MealLogConcept<U extends User, F extends FoodItem> {
-  private dbClient: MongoClient;
-  private ownsClient: boolean;
+  private dbClient?: MongoClient;
+  private dbFromServer?: MinimalDb;
+  private ownsClient = false;
   private dbName: string;
   private mealsCollection?: Collection<MealDocument>;
   // A resolver function to fetch a full User object given a UserId.
@@ -186,50 +194,99 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
    * @param dbName The name of the database to use.
    * @param userResolver An asynchronous function to retrieve a User object by its ID.
    */
+  // Overload 1: Standard constructor used in tests (client or URI string)
   constructor(
     mongo: string | MongoClient,
     dbName: string,
     userResolver: (userId: UserId) => Promise<U | undefined>,
+  );
+  // Overload 2: Adapter constructor used by concept_server (Db only)
+  constructor(db: MinimalDb);
+  // Implementation
+  constructor(
+    mongoOrDb: string | MongoClient | MinimalDb,
+    dbName?: string,
+    userResolver?: (userId: UserId) => Promise<U | undefined>,
   ) {
-    if (typeof mongo === "string") {
-      this.dbClient = new MongoClient(mongo);
+    if (typeof mongoOrDb === "string") {
+      this.dbClient = new MongoClient(mongoOrDb);
       this.ownsClient = true;
+      this.dbName = dbName!;
+    } else if (mongoOrDb instanceof MongoClient) {
+      this.dbClient = mongoOrDb;
+      this.dbName = dbName!;
     } else {
-      this.dbClient = mongo;
-      this.ownsClient = false;
+      // Received a Db from the concept server
+      this.dbFromServer = mongoOrDb;
+      this.dbName = mongoOrDb.databaseName ?? mongoOrDb.name ?? "";
     }
-    this.dbName = dbName;
-    this.userResolver = userResolver;
+
+    // If no resolver provided (server path), use a permissive default that hydrates minimal user shape
+    this.userResolver = userResolver ??
+      ((userId: UserId) => Promise.resolve({ id: userId } as unknown as U));
   }
 
   /**
    * Establishes the connection to MongoDB and sets up the collection.
    * Must be called before any other database operations.
    */
-  public async connect(): Promise<void> {
-    if (this.ownsClient) {
-      await this.dbClient.connect();
+  public async connect(): Promise<Empty> {
+    if (this.dbFromServer) {
+      // Server provided Db; treat as already connected
+      this.mealsCollection = this.dbFromServer.collection<MealDocument>(
+        "Meals",
+      );
+      return {};
     }
-    this.mealsCollection = this.dbClient.db(this.dbName).collection<
-      MealDocument
-    >("Meals");
+    if (this.dbClient) {
+      if (this.ownsClient) {
+        await this.dbClient.connect();
+      }
+      this.mealsCollection = this.dbClient.db(this.dbName).collection<
+        MealDocument
+      >("Meals");
+    } else {
+      throw new Error("No database available to connect.");
+    }
+    return {};
   }
 
   /**
    * Closes the MongoDB connection.
    */
-  public async disconnect(): Promise<void> {
-    if (this.ownsClient) {
+  public async disconnect(): Promise<Empty> {
+    if (this.dbFromServer) {
+      // Do not close external server-managed connections
+      this.mealsCollection = undefined;
+      return {};
+    }
+    if (this.dbClient && this.ownsClient) {
       await this.dbClient.close();
     }
     this.mealsCollection = undefined;
+    return {};
   }
 
-  private getCollection(): Collection<MealDocument> {
+  #collection(): Collection<MealDocument> {
+    // Lazily initialize when provided a Db directly (server-managed)
+    if (!this.mealsCollection && this.dbFromServer) {
+      this.mealsCollection = this.dbFromServer.collection<MealDocument>(
+        "Meals",
+      );
+    }
     if (!this.mealsCollection) {
       throw new Error("MealLogConcept is not connected. Call connect() first.");
     }
     return this.mealsCollection;
+  }
+
+  // Exposed for API: return a JSON-friendly description, not the raw collection object
+  public getCollection(): { name: string } {
+    const col = this.#collection();
+    // @ts-ignore - driver provides 'collectionName'
+    const name =
+      (col as unknown as { collectionName?: string }).collectionName ?? "Meals";
+    return { name };
   }
 
   /**
@@ -237,11 +294,22 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
    * @param mealId The unique ID of the meal.
    * @returns The MongoDB document if found, otherwise null.
    */
-  private async _getMealDocumentById(
+  // Overloads: support API-style object or positional string
+  async #getMealDocumentById(
     mealId: string,
+  ): Promise<WithId<MealDocument> | null>;
+  async #getMealDocumentById(
+    args: { mealId: string },
+  ): Promise<WithId<MealDocument> | null>;
+  async #getMealDocumentById(
+    mealIdOrArgs: string | { mealId: string },
   ): Promise<WithId<MealDocument> | null> {
-    const collection = this.getCollection();
-    return collection.findOne({ _id: mealId });
+    const mealId = typeof mealIdOrArgs === "string"
+      ? mealIdOrArgs
+      : mealIdOrArgs.mealId;
+    const collection = this.#collection();
+    const result = await collection.findOne({ _id: mealId });
+    return result;
   }
 
   /**
@@ -250,10 +318,19 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
    * @param mealId The unique ID of the meal.
    * @returns The `Meal` object if found and owner resolved, otherwise undefined.
    */
-  private async _getMealObjectById(
+  async #getMealObjectById(
     mealId: string,
+  ): Promise<Meal<U, F> | undefined>;
+  async #getMealObjectById(
+    args: { mealId: string },
+  ): Promise<Meal<U, F> | undefined>;
+  async #getMealObjectById(
+    mealIdOrArgs: string | { mealId: string },
   ): Promise<Meal<U, F> | undefined> {
-    const doc = await this._getMealDocumentById(mealId);
+    const mealId = typeof mealIdOrArgs === "string"
+      ? mealIdOrArgs
+      : mealIdOrArgs.mealId;
+    const doc = await this.#getMealDocumentById(mealId);
     if (!doc) return undefined;
 
     const owner = await this.userResolver(doc.ownerId);
@@ -290,19 +367,65 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
    * Throws:
    * - Error: If `owner` is invalid or `items` is empty.
    */
+  // Overloads: positional (tests) and object (API)
   public async submit(
     owner: U,
     at: Date,
     items: F[],
     notes?: string,
+  ): Promise<Meal<U, F>>;
+  public async submit(
+    args: {
+      owner?: U;
+      ownerId?: UserId;
+      at: Date | string;
+      items: F[];
+      notes?: string;
+    },
+  ): Promise<Meal<U, F>>;
+  public async submit(
+    ownerOrArgs: U | {
+      owner?: U;
+      ownerId?: UserId;
+      at: Date | string;
+      items: F[];
+      notes?: string;
+    },
+    at?: Date,
+    items?: F[],
+    notes?: string,
   ): Promise<Meal<U, F>> {
-    // Requirements check handled by Meal.createNewMeal factory.
-    const newMeal = Meal.createNewMeal(owner, at, items, notes);
+    let owner: U;
+    let atDate: Date;
+    let theItems: F[];
+    let theNotes: string | undefined;
+
+    if (
+      typeof ownerOrArgs === "object" && "items" in ownerOrArgs &&
+      (at === undefined)
+    ) {
+      const args = ownerOrArgs as {
+        owner?: U;
+        ownerId?: UserId;
+        at: Date | string;
+        items: F[];
+        notes?: string;
+      };
+      owner = args.owner ?? (await this.userResolver(args.ownerId as UserId))!;
+      atDate = args.at instanceof Date ? args.at : new Date(args.at);
+      theItems = args.items;
+      theNotes = args.notes;
+    } else {
+      owner = ownerOrArgs as U;
+      atDate = at as Date;
+      theItems = items as F[];
+      theNotes = notes;
+    }
+
+    const newMeal = Meal.createNewMeal(owner, atDate, theItems, theNotes);
     const mealDoc = newMeal.toDocument();
-
-    const collection = this.getCollection();
+    const collection = this.#collection();
     await collection.insertOne(mealDoc);
-
     return newMeal;
   }
 
@@ -334,41 +457,96 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
     mealId: string,
     items?: F[],
     notes?: string,
-  ): Promise<void> {
+  ): Promise<void>;
+  public async edit(
+    args: {
+      caller?: U;
+      callerId?: UserId;
+      mealId: string;
+      items?: F[];
+      notes?: string;
+    },
+  ): Promise<Empty | { error: string }>;
+  public async edit(
+    callerOrArgs: U | {
+      caller?: U;
+      callerId?: UserId;
+      mealId: string;
+      items?: F[];
+      notes?: string;
+    },
+    mealId?: string,
+    items?: F[],
+    notes?: string,
+  ): Promise<void | (Empty | { error: string })> {
+    let caller: U;
+    let id: string;
+    let newItems: F[] | undefined = items;
+    let newNotes: string | undefined = notes;
+    const isObjectForm = typeof callerOrArgs === "object" &&
+      mealId === undefined;
+
+    if (isObjectForm) {
+      const args = callerOrArgs as {
+        caller?: U;
+        callerId?: UserId;
+        mealId: string;
+        items?: F[];
+        notes?: string;
+      };
+      caller = args.caller ??
+        (await this.userResolver(args.callerId as UserId))!;
+      id = args.mealId;
+      newItems = args.items;
+      newNotes = args.notes;
+    } else {
+      caller = callerOrArgs as U;
+      id = mealId as string;
+    }
     // Requirements check
-    const collection = this.getCollection();
-    const mealDoc = await this._getMealDocumentById(mealId);
+    const collection = this.#collection();
+    const mealDoc = await this.#getMealDocumentById(id);
     if (!mealDoc) {
-      throw new Error(`Meal with ID '${mealId}' does not exist.`);
+      if (isObjectForm) {
+        return { error: `Meal with ID '${id}' does not exist.` };
+      }
+      throw new Error(`Meal with ID '${id}' does not exist.`);
     }
     // Compare users by their unique ID
     if (mealDoc.ownerId !== caller.id) {
+      if (isObjectForm) {
+        return { error: "Caller is not the owner of this meal." };
+      }
       throw new PermissionError("Caller is not the owner of this meal.");
     }
     if (mealDoc.status !== MealStatus.ACTIVE) {
-      throw new Error(
-        `Cannot edit a meal that is not active. Current status: ${mealDoc.status}`,
-      );
+      const msg =
+        `Cannot edit a meal that is not active. Current status: ${mealDoc.status}`;
+      if (isObjectForm) return { error: msg };
+      throw new Error(msg);
     }
-    if (items !== undefined && items.length === 0) {
-      throw new Error("Items array cannot be empty when updating.");
+    if (newItems !== undefined && newItems.length === 0) {
+      const msg = "Items array cannot be empty when updating.";
+      if (isObjectForm) return { error: msg };
+      throw new Error(msg);
     }
 
     // Effects
     const updateFields: Partial<MealDocument> = {};
-    if (items !== undefined) {
-      updateFields.items = items;
+    if (newItems !== undefined) {
+      updateFields.items = newItems;
     }
-    if (notes !== undefined) {
-      updateFields.notes = notes;
+    if (newNotes !== undefined) {
+      updateFields.notes = newNotes;
     }
 
     if (Object.keys(updateFields).length > 0) {
       await collection.updateOne(
-        { _id: mealId },
+        { _id: id },
         { $set: updateFields },
       );
     }
+    if (isObjectForm) return {};
   }
 
   /**
@@ -391,28 +569,60 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
    * - Error: If the meal does not exist or is not active.
    * - PermissionError: If `caller` is not the owner of the meal.
    */
-  public async delete(caller: U, mealId: string): Promise<void> {
+  public async delete(caller: U, mealId: string): Promise<void>;
+  public async delete(
+    args: { caller?: U; callerId?: UserId; mealId: string },
+  ): Promise<Empty | { error: string }>;
+  public async delete(
+    callerOrArgs: U | { caller?: U; callerId?: UserId; mealId: string },
+    mealId?: string,
+  ): Promise<void | (Empty | { error: string })> {
+    let caller: U;
+    let id: string;
+    const isObjectForm = typeof callerOrArgs === "object" &&
+      mealId === undefined;
+    if (isObjectForm) {
+      const args = callerOrArgs as {
+        caller?: U;
+        callerId?: UserId;
+        mealId: string;
+      };
+      caller = args.caller ??
+        (await this.userResolver(args.callerId as UserId))!;
+      id = args.mealId;
+    } else {
+      caller = callerOrArgs as U;
+      id = mealId as string;
+    }
     // Requirements check
-    const collection = this.getCollection();
-    const mealDoc = await this._getMealDocumentById(mealId);
+    const collection = this.#collection();
+    const mealDoc = await this.#getMealDocumentById(id);
     if (!mealDoc) {
-      throw new Error(`Meal with ID '${mealId}' does not exist.`);
+      if (isObjectForm) {
+        return { error: `Meal with ID '${id}' does not exist.` };
+      }
+      throw new Error(`Meal with ID '${id}' does not exist.`);
     }
     // Compare users by their unique ID
     if (mealDoc.ownerId !== caller.id) {
+      if (isObjectForm) {
+        return { error: "Caller is not the owner of this meal." };
+      }
       throw new PermissionError("Caller is not the owner of this meal.");
     }
     if (mealDoc.status !== MealStatus.ACTIVE) {
-      throw new Error(
-        `Cannot delete a meal that is not active. Current status: ${mealDoc.status}`,
-      );
+      const msg =
+        `Cannot delete a meal that is not active. Current status: ${mealDoc.status}`;
+      if (isObjectForm) return { error: msg };
+      throw new Error(msg);
     }
 
     // Effects
     await collection.updateOne(
-      { _id: mealId },
+      { _id: id },
       { $set: { status: MealStatus.DELETED } },
     );
+    if (isObjectForm) return {};
   }
 
   // --- Utility Methods (not formal actions, but helpful for concept interaction) ---
@@ -425,14 +635,27 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
    */
   public async getMealsForOwner(
     ownerId: UserId,
+    includeDeleted?: boolean,
+  ): Promise<Meal<U, F>[]>;
+  public async getMealsForOwner(
+    args: { ownerId: UserId; includeDeleted?: boolean },
+  ): Promise<Meal<U, F>[]>;
+  public async getMealsForOwner(
+    ownerOrArgs: UserId | { ownerId: UserId; includeDeleted?: boolean },
     includeDeleted: boolean = false,
   ): Promise<Meal<U, F>[]> {
+    const ownerId = typeof ownerOrArgs === "string"
+      ? ownerOrArgs
+      : ownerOrArgs.ownerId;
+    includeDeleted = typeof ownerOrArgs === "string"
+      ? includeDeleted
+      : (ownerOrArgs.includeDeleted ?? false);
     const query: Document = { ownerId: ownerId };
     if (!includeDeleted) {
       query.status = MealStatus.ACTIVE;
     }
 
-    const collection = this.getCollection();
+    const collection = this.#collection();
     const mealDocs = await collection.find(query).toArray();
     const meals: Meal<U, F>[] = [];
 
@@ -461,12 +684,29 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
   public async getMealById(
     mealId: string,
     callerId?: UserId,
-  ): Promise<Meal<U, F> | undefined> {
-    const meal = await this._getMealObjectById(mealId);
+  ): Promise<Meal<U, F> | undefined>;
+  public async getMealById(
+    args: { mealId: string; callerId?: UserId },
+  ): Promise<Meal<U, F> | { error: string } | undefined>;
+  public async getMealById(
+    mealOrArgs: string | { mealId: string; callerId?: UserId },
+    callerId?: UserId,
+  ): Promise<Meal<U, F> | { error: string } | undefined> {
+    const mealId = typeof mealOrArgs === "string"
+      ? mealOrArgs
+      : mealOrArgs.mealId;
+    callerId = typeof mealOrArgs === "string" ? callerId : mealOrArgs.callerId;
+    const meal = await this.#getMealObjectById(mealId);
     if (meal && callerId && meal.owner.id !== callerId) {
       // If a callerId is provided, and it doesn't match the owner, deny access.
       // This implements the implied "only the user will be able to access their own meal logs" for read operations.
-      throw new PermissionError("Caller is not authorized to view this meal.");
+      if (typeof mealOrArgs === "string") {
+        throw new PermissionError(
+          "Caller is not authorized to view this meal.",
+        );
+      } else {
+        return { error: "Caller is not authorized to view this meal." };
+      }
     }
     return meal;
   }
