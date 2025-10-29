@@ -465,6 +465,7 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
       mealId: string;
       items?: F[];
       notes?: string;
+      at?: Date | string;
     },
   ): Promise<Empty | { error: string }>;
   public async edit(
@@ -474,6 +475,7 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
       mealId: string;
       items?: F[];
       notes?: string;
+      at?: Date | string;
     },
     mealId?: string,
     items?: F[],
@@ -485,6 +487,7 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
     let newNotes: string | undefined = notes;
     const isObjectForm = typeof callerOrArgs === "object" &&
       mealId === undefined;
+    let newAt: Date | undefined;
 
     if (isObjectForm) {
       const args = callerOrArgs as {
@@ -493,12 +496,20 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
         mealId: string;
         items?: F[];
         notes?: string;
+        at?: Date | string;
       };
       caller = args.caller ??
         (await this.userResolver(args.callerId as UserId))!;
       id = args.mealId;
       newItems = args.items;
       newNotes = args.notes;
+      if (args.at !== undefined) {
+        const parsed = args.at instanceof Date ? args.at : new Date(args.at);
+        if (isNaN(parsed.getTime())) {
+          return { error: "Invalid 'at' timestamp. Use ISO-8601 or Date." };
+        }
+        newAt = parsed;
+      }
     } else {
       caller = callerOrArgs as U;
       id = mealId as string;
@@ -538,6 +549,9 @@ export class MealLogConcept<U extends User, F extends FoodItem> {
     }
     if (newNotes !== undefined) {
       updateFields.notes = newNotes;
+    }
+    if (newAt !== undefined) {
+      updateFields.at = newAt;
     }
 
     if (Object.keys(updateFields).length > 0) {

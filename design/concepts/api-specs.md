@@ -213,7 +213,7 @@ Endpoints
 
 - POST `/api/MealLog/edit`
   - Request:
-    { "callerId": "ID", "mealId": "ID", "items": [{ "id": "string", "name": "string" }](optional), "notes": "string(optional)" }
+  { "callerId": "ID", "mealId": "ID", "items": [{ "id": "string", "name": "string" }](optional), "notes": "string(optional)", "at": "ISO-8601(optional)" }
   - Response (200): {} or { "error": "string" }
 
 - POST `/api/MealLog/delete`
