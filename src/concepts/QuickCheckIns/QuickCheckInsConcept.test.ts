@@ -1,4 +1,4 @@
-import { assertEquals, assertExists, assertNotEquals } from "jsr:@std/assert";
+import { assertEquals, assertExists, assertNotEquals } from "@std/assert";
 import { testDb } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
 import QuickCheckInsConcept from "./QuickCheckInsConcept.ts";
@@ -265,15 +265,14 @@ Deno.test("Action: edit - requirements enforcement (non-existent check-in, unaut
     console.log("Setup: Defining initial and updated metrics...");
     const { metric: initialMetric } =
       (await concept.defineMetric({ name: "InitialMetric" })) as { metric: ID };
-    const { metric: updatedMetric } =
+    const { metric: _updatedMetric } =
       (await concept.defineMetric({ name: "UpdatedMetric" })) as { metric: ID };
-    const { checkIn: checkInId } =
-      (await concept.record({
-        owner: userAlice,
-        at: new Date(),
-        metric: initialMetric,
-        value: 10,
-      })) as { checkIn: ID };
+    const { checkIn: checkInId } = (await concept.record({
+      owner: userAlice,
+      at: new Date(),
+      metric: initialMetric,
+      value: 10,
+    })) as { checkIn: ID };
     assertExists(checkInId, "Initial check-in should be created.");
 
     // Test Case 1: Requires - The CheckIn 'checkIn' exists (attempt to edit non-existent check-in)
@@ -351,13 +350,12 @@ Deno.test("Action: edit - effects verification (update value, update metric, upd
       (await concept.defineMetric({ name: "MetricA" })) as { metric: ID };
     const { metric: metricB } =
       (await concept.defineMetric({ name: "MetricB" })) as { metric: ID };
-    const { checkIn: checkInId } =
-      (await concept.record({
-        owner: userAlice,
-        at: new Date(),
-        metric: metricA,
-        value: 10,
-      })) as { checkIn: ID };
+    const { checkIn: checkInId } = (await concept.record({
+      owner: userAlice,
+      at: new Date(),
+      metric: metricA,
+      value: 10,
+    })) as { checkIn: ID };
     assertExists(checkInId, "Initial check-in should be created.");
 
     // Test Case 1: Effects - Update value only
@@ -467,27 +465,24 @@ Deno.test("Queries: _getCheckIn, _getMetricsByName, _listCheckInsByOwner functio
     const { metric: focusId } =
       (await concept.defineMetric({ name: "Focus" })) as { metric: ID };
 
-    const checkIn1Alice =
-      (await concept.record({
-        owner: userAlice,
-        at: new Date("2023-03-01T08:00:00Z"),
-        metric: energyId,
-        value: 7,
-      })) as { checkIn: ID };
-    const checkIn2Alice =
-      (await concept.record({
-        owner: userAlice,
-        at: new Date("2023-03-01T10:00:00Z"),
-        metric: focusId,
-        value: 6,
-      })) as { checkIn: ID };
-    const checkIn1Bob =
-      (await concept.record({
-        owner: userBob,
-        at: new Date("2023-03-01T09:00:00Z"),
-        metric: energyId,
-        value: 5,
-      })) as { checkIn: ID };
+    const checkIn1Alice = (await concept.record({
+      owner: userAlice,
+      at: new Date("2023-03-01T08:00:00Z"),
+      metric: energyId,
+      value: 7,
+    })) as { checkIn: ID };
+    const checkIn2Alice = (await concept.record({
+      owner: userAlice,
+      at: new Date("2023-03-01T10:00:00Z"),
+      metric: focusId,
+      value: 6,
+    })) as { checkIn: ID };
+    const checkIn1Bob = (await concept.record({
+      owner: userBob,
+      at: new Date("2023-03-01T09:00:00Z"),
+      metric: energyId,
+      value: 5,
+    })) as { checkIn: ID };
 
     // Query: _getCheckIn
     console.log(`Querying for check-in '${checkIn1Alice.checkIn}'...`);
@@ -577,6 +572,68 @@ Deno.test("Queries: _getCheckIn, _getMetricsByName, _listCheckInsByOwner functio
       owner: userCharlie,
     });
     assertEquals(charlieCheckIns.length, 0, "Charlie should have 0 check-ins.");
+  } finally {
+    await client.close();
+  }
+});
+
+Deno.test("Action: delete - success, non-owner, and missing check-in", async () => {
+  const [db, client] = await testDb();
+  const concept = new QuickCheckInsConcept(db);
+
+  try {
+    // Setup: define a metric and create two check-ins for Alice and Bob
+    const { metric } = (await concept.defineMetric({ name: "TempMetric" })) as {
+      metric: ID;
+    };
+    const { checkIn: aliceCheckIn } = (await concept.record({
+      owner: userAlice,
+      at: new Date("2025-10-30T10:00:00Z"),
+      metric,
+      value: 3,
+    })) as { checkIn: ID };
+    const { checkIn: bobCheckIn } = (await concept.record({
+      owner: userBob,
+      at: new Date("2025-10-30T11:00:00Z"),
+      metric,
+      value: 6,
+    })) as { checkIn: ID };
+
+    // Success: owner deletes their own check-in
+    const delOk = await concept.delete({
+      checkIn: aliceCheckIn,
+      owner: userAlice,
+    });
+    assertEquals(
+      "error" in delOk,
+      false,
+      "Owner should be able to delete their check-in.",
+    );
+    const afterDelete = await concept._getCheckIn({ checkIn: aliceCheckIn });
+    assertEquals(afterDelete, null, "Deleted check-in should not be found.");
+
+    // Non-owner cannot delete
+    const delUnauthorized = await concept.delete({
+      checkIn: bobCheckIn,
+      owner: userAlice,
+    });
+    assertEquals("error" in delUnauthorized, true);
+    assertEquals(
+      (delUnauthorized as { error: string }).error,
+      "You are not the owner of this check-in.",
+    );
+    const bobStillThere = await concept._getCheckIn({ checkIn: bobCheckIn });
+    assertExists(
+      bobStillThere,
+      "Bob's check-in should still exist after unauthorized attempt.",
+    );
+
+    // Missing check-in returns error
+    const delMissing = await concept.delete({
+      checkIn: "checkin:missing" as ID,
+      owner: userAlice,
+    });
+    assertEquals("error" in delMissing, true);
   } finally {
     await client.close();
   }

@@ -1,4 +1,4 @@
-import { Collection, Db } from "npm:mongodb";
+import { Collection, Db } from "mongodb";
 import { Empty, ID } from "@utils/types.ts";
 import { freshID } from "@utils/database.ts";
 
@@ -193,6 +193,34 @@ export default class QuickCheckInsConcept {
       return { error: "Failed to update check-in." };
     }
 
+    return {};
+  }
+
+  /**
+   * @action delete
+   * @param {object} args - The action arguments.
+   * @param {CheckIn} args.checkIn - The ID of the check-in to delete.
+   * @param {User} args.owner - The user attempting to delete (must be the owner of the check-in).
+   * @returns {Promise<Empty | {error: string}>} An empty object on success or an error message.
+   *
+   * @requires the CheckIn 'checkIn' exists and its owner is 'owner'.
+   * @effects permanently remove the check-in document.
+   */
+  async delete(
+    { checkIn, owner }: { checkIn: CheckIn; owner: User },
+  ): Promise<Empty | { error: string }> {
+    const existingCheckIn = await this.checkIns.findOne({ _id: checkIn });
+    if (!existingCheckIn) {
+      return { error: `Check-in with ID '${checkIn}' not found.` };
+    }
+    if (existingCheckIn.owner !== owner) {
+      return { error: "You are not the owner of this check-in." };
+    }
+
+    const result = await this.checkIns.deleteOne({ _id: checkIn });
+    if (result.deletedCount !== 1) {
+      return { error: "Failed to delete check-in." };
+    }
     return {};
   }
 

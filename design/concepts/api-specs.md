@@ -155,6 +155,11 @@ Endpoints
     { "checkIn": "ID", "owner": "ID", "metric": "ID(optional)", "value": 0(optional) }
   - Response (200): {} or { "error": "string" }
 
+- POST `/api/QuickCheckIns/delete`
+  - Request:
+    { "checkIn": "ID", "owner": "ID" }
+  - Response (200): {} or { "error": "string" }
+
 - POST `/api/QuickCheckIns/_getCheckIn`
   - Request:
     { "checkIn": "ID" }
