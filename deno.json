@@ -4,8 +4,8 @@
         "@concepts": "./src/concepts/concepts.ts",
         "@test-concepts": "./src/concepts/test_concepts.ts",
         "@utils/": "./src/utils/",
-        "@engine": "./src/engine/mod.ts",
-        "@syncs": "./src/syncs/syncs.ts"
+    "mongodb": "npm:mongodb@6.10.0",
+    "google-generative-ai": "npm:@google/generative-ai@^0.11.1"
     },
     "tasks": {
         "start": "deno run --allow-net --allow-write --allow-read --allow-sys --allow-env src/main.ts",

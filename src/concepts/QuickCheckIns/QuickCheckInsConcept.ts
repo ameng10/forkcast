@@ -253,6 +253,38 @@ export default class QuickCheckInsConcept {
   }
 
   /**
+   * @action deleteMetric
+   * @param {object} args - The action arguments.
+   * @param {ExternalMetricID} args.metric - The metric ID to delete.
+   * @returns {Promise<Empty | {error: string}>} Empty on success or an error.
+   *
+   * @requires metric exists and no CheckIn documents reference it.
+   * @effects permanently remove the InternalMetric document.
+   */
+  async deleteMetric(
+    { metric }: { metric: ExternalMetricID },
+  ): Promise<Empty | { error: string }> {
+    // Ensure metric exists
+    const existing = await this.internalMetrics.findOne({ _id: metric });
+    if (!existing) {
+      return { error: `Metric with ID '${metric}' not found.` };
+    }
+    // Guard: prevent deletion if in use by any check-in
+    const inUse = await this.checkIns.findOne({ metric });
+    if (inUse) {
+      return {
+        error:
+          "Cannot delete metric: there are existing check-ins referencing this metric.",
+      };
+    }
+    const res = await this.internalMetrics.deleteOne({ _id: metric });
+    if (res.deletedCount !== 1) {
+      return { error: "Failed to delete metric." };
+    }
+    return {};
+  }
+
+  /**
    * @query _listCheckInsByOwner
    * @param {object} args - The query arguments.
    * @param {User} args.owner - The owner whose check-ins are to be listed.
