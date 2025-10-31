@@ -22,6 +22,17 @@ Endpoints:
 - POST `/api/PersonalQA/_getUserFacts`
 - POST `/api/PersonalQA/_getUserQAs`
 
+### PersonalQA (extended LLM endpoints)
+- POST `/api/PersonalQA/setTemplate`
+  - body: { requester: ID, name: string, template: string }
+  - returns: {}
+- POST `/api/PersonalQA/askLLM`
+  - body: { requester: ID, question: string, k?: number, model?: string }
+  - returns: { answer: string, citedFacts: ID[], confidence: number }
+- POST `/api/PersonalQA/_getUserDrafts`
+  - body: { owner: ID }
+  - returns: Draft[] where Draft = { _id: ID, owner: ID, question: string, rawText: string, rawJson: unknown, validated: boolean }
+
 ---
 
 ## InsightMining — Base: `/api/InsightMining`
@@ -177,6 +188,11 @@ Endpoints
     { "owner": "ID" }
   - Response (200): Array of CheckInDocument
     [ { "_id": "ID", "owner": "ID", "at": "ISO-8601", "metric": "ID", "value": 0 } ]
+
+- POST `/api/QuickCheckIns/deleteMetric`
+  - Request:
+    { "metric": "ID" }
+  - Response (200): {} or { "error": "string" }
 
 ---
 

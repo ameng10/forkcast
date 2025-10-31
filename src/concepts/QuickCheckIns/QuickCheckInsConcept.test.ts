@@ -638,3 +638,46 @@ Deno.test("Action: delete - success, non-owner, and missing check-in", async () 
     await client.close();
   }
 });
+
+Deno.test("Action: deleteMetric prevents delete when in use and succeeds when unused", async () => {
+  const [db, client] = await testDb();
+  const concept = new QuickCheckInsConcept(db);
+
+  try {
+    // Create a metric and a check-in referencing it
+    const { metric } = (await concept.defineMetric({ name: "ToDelete" })) as {
+      metric: ID;
+    };
+    const _ci = await concept.record({
+      owner: userAlice,
+      at: new Date("2025-10-30T12:00:00Z"),
+      metric,
+      value: 4,
+    });
+
+    // Attempt to delete while in use
+    const blocked = await concept.deleteMetric({ metric });
+    assertEquals("error" in blocked, true);
+
+    // Remove referencing check-in, then delete metric
+    const { checkIn } = (await concept.record({
+      owner: userBob,
+      at: new Date("2025-10-30T13:00:00Z"),
+      metric,
+      value: 2,
+    })) as { checkIn: ID };
+    await concept.delete({ checkIn, owner: userBob });
+    // Also ensure previous check-in is removed to free the metric
+    const allAlice = await concept._listCheckInsByOwner({ owner: userAlice });
+    for (const c of allAlice) {
+      if (c.metric === metric) {
+        await concept.delete({ checkIn: c._id, owner: userAlice });
+      }
+    }
+
+    const ok = await concept.deleteMetric({ metric });
+    assertEquals("error" in ok, false);
+  } finally {
+    await client.close();
+  }
+});
