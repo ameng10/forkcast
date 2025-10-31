@@ -205,11 +205,19 @@ export default class PersonalQAConcept {
     const selection = selectTopK<FactDoc>(pool, k);
 
     const apiKey = (typeof Deno !== "undefined" && Deno.env?.get)
-      ? (Deno.env.get("GEMINI_API_KEY") ?? "")
+      ? (Deno.env.get("GOOGLE_API_KEY") ?? Deno.env.get("GEMINI_API_KEY") ?? "")
       : "";
+    const forceGemini = (typeof Deno !== "undefined" && Deno.env?.get)
+      ? (Deno.env.get("PERSONALQA_FORCE_GEMINI") === "1")
+      : false;
 
     // Fallback behavior when no API key or to keep tests hermetic
     if (!apiKey) {
+      if (forceGemini) {
+        throw new Error(
+          "GOOGLE_API_KEY/GEMINI_API_KEY is not set but PERSONALQA_FORCE_GEMINI=1",
+        );
+      }
       const answer = conservativeSummary(args.question, selection);
       const qa: QADoc = {
         _id: freshID(),
@@ -224,60 +232,15 @@ export default class PersonalQAConcept {
       return qa;
     }
 
-    // Use Gemini via REST when GOOGLE_API_KEY is available
+    // Use official client
     const userTpl = await this.templates.findOne(
       { _id: args.requester } as any,
-    ) as
-      | { _id: ID; name: string; text: string }
-      | null;
+    ) as { _id: ID; name: string; text: string } | null;
     const template = userTpl?.text ?? DEFAULT_TEMPLATE;
     const prompt = fillTemplate(template, selection, args.question);
-
-    const endpoint =
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${
-        encodeURIComponent(apiKey)
-      }`;
-    const body = {
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: prompt }],
-        },
-      ],
-      generationConfig: { temperature: 0.4 },
-    };
-
-    const resp = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    if (!resp.ok) {
-      // Consume body to avoid resource leak in Deno tests
-      try {
-        await resp.text();
-      } catch (_) {
-        try {
-          await resp.body?.cancel();
-        } catch (_) { /* ignore */ }
-      }
-      // On failure, store a QA with fallback answer
-      const answer = conservativeSummary(args.question, selection);
-      const qa: QADoc = {
-        _id: freshID(),
-        owner: args.requester,
-        question: args.question,
-        answer,
-        citedFacts: selection.map((f) => f._id),
-        confidence: 0.2,
-        at: iso(new Date()),
-      };
-      await this.qas.insertOne(qa as any);
-      return qa;
-    }
-
-    const data = await resp.json();
-    const text = (extractGeminiText(data) ?? "").trim();
+    const { GeminiLLM } = await import("@utils/gemini.ts");
+    const llm = new GeminiLLM({ apiKey });
+    const text = (await llm.executeLLM(prompt)).trim();
     const answerText = text.length > 0
       ? text
       : conservativeSummary(args.question, selection);
@@ -299,7 +262,7 @@ export default class PersonalQAConcept {
       question: args.question,
       answer: answerText,
       citedFacts: selection.map((f) => f._id),
-      confidence: 0.5,
+      confidence: 0.9,
       at: iso(new Date()),
     };
     await this.qas.insertOne(qa as any);
@@ -329,8 +292,8 @@ export default class PersonalQAConcept {
 
 // --- Gemini helpers and prompt template ---
 const DEFAULT_TEMPLATE =
-  `Answer the user's question strictly using some of the facts below. If there are no facts, do a web search. Be concise. If the question
-  is personal to the user and cannot be answered with facts or a web search, say so clearly.
+  `Use a combination of the facts below and a web search to answer the user's question.
+Do not copy facts verbatim. Give a couple short, confident sentences.
 
 Question: {{question}}
 Facts:
@@ -345,15 +308,6 @@ function fillTemplate(template: string, facts: FactDoc[], question: string) {
     .replace("{{factsText}}", factsText);
 }
 
-function extractGeminiText(res: any): string | null {
-  const parts = res?.candidates?.[0]?.content?.parts;
-  if (Array.isArray(parts)) {
-    for (const p of parts) {
-      if (p?.text && typeof p.text === "string") return p.text as string;
-    }
-  }
-  const alts = res?.candidates?.[0]?.content?.parts?.[0]?.text;
-  return typeof alts === "string" ? alts : null;
-}
+// extractGeminiText removed (now using official client that returns text)
 
 // JSON parsing helper removed: we now treat Gemini output as plain text.
