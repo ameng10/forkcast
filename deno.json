@@ -4,6 +4,10 @@
         "@concepts": "./src/concepts/concepts.ts",
         "@test-concepts": "./src/concepts/test_concepts.ts",
         "@utils/": "./src/utils/",
+        "@concepts": "./src/concepts/concepts.ts",
+        "@test-concepts": "./src/concepts/test_concepts.ts",
+        "@engine": "./src/engine/mod.ts",
+        "@syncs": "./src/syncs/syncs.ts",
     "mongodb": "npm:mongodb@6.10.0",
     "google-generative-ai": "npm:@google/generative-ai@^0.11.1"
     },

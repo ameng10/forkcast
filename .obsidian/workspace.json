@@ -168,6 +168,9 @@
   },
   "active": "15b82e147f4d6b86",
   "lastOpenFiles": [
+    "README.txt",
+    "designchanges.md",
+    "src/utils/gemini.ts",
     "src/concepts/PersonalQA/PersonalQAConcept.askLLM.test.ts",
     "intro-gemini-schedule copy",
     "design/concepts/api-specs.md",
@@ -194,7 +197,6 @@
     "context/design/concepts/api-specs.md/steps/API Specification.b7381b49.md",
     "context/design/concepts/api-specs.md/steps/API Specification.bf4be555.md",
     "context/design/concepts/api-specs.md/steps/API Specification.1c982663.md",
-    "context/design/concepts/api-specs.md/steps/API Specification.0700beab.md",
     "context/design/concepts/api-specs.md/steps",
     "context/design/concepts/api-spec.md/steps",
     "context/design/concepts/QuickCheckIns/testing.md/steps",
@@ -202,8 +204,6 @@
     "context/design/concepts/QuickCheckIns",
     "context/design/concepts/SwapSuggestions/testing.md/steps",
     "context/design/concepts/SwapSuggestions/implementation.md/steps",
-    "context/design/concepts/SwapSuggestions",
-    "design/concepts/SwapSuggestions",
     "Untitled.canvas"
   ]
 }
