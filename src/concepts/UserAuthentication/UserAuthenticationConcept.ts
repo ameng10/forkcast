@@ -1,141 +1,118 @@
 import { Collection, Db } from "npm:mongodb";
-import { freshID } from "@utils/database.ts";
 import { ID } from "@utils/types.ts";
+import { freshID } from "@utils/database.ts";
 
-// Generic types for this concept
+// A simple helper function to hash passwords using the Web Crypto API.
+// In a production system, a more robust, salted hashing algorithm like Argon2 or bcrypt would be preferred.
+async function hashPassword(password: string): Promise<string> {
+  const data = new TextEncoder().encode(password);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+// Collection prefix for this concept
+const PREFIX = "UserAuthentication" + ".";
+
+// Generic types of this concept
 type User = ID;
 
-const PREFIX = "UserAuthentication";
-
 /**
- * @concept UserAuthentication
- * @purpose To verify the identity of a user based on credentials they provide, enabling secure access to functionalities.
- * @principle If a user registers with a username and password, and later provides the same username and password to log in, they will be authenticated as that user and can perform actions requiring authentication until they log out.
- */
-
-/**
- * a set of Users with
- *  a username String
- *  a password String
+ * Represents the state of a single user in the database.
+ * a set of `User`s with
+ *   a `username` String (unique)
+ *   a `passwordHash` String
  */
 interface UserDoc {
   _id: User;
   username: string;
-  password: string;
+  passwordHash: string;
 }
 
 /**
- * a LoggedIn set of Users
+ * @concept UserAuthentication
+ * @purpose To securely verify a user's identity based on credentials.
  */
-interface LoggedInDoc {
-  _id: User;
-}
-
 export default class UserAuthenticationConcept {
   users: Collection<UserDoc>;
-  loggedIn: Collection<LoggedInDoc>;
 
-  constructor(db: Db) {
-    this.users = db.collection<UserDoc>(`${PREFIX}.users`);
-    this.loggedIn = db.collection<LoggedInDoc>(`${PREFIX}.loggedIn`);
+  constructor(private readonly db: Db) {
+    this.users = this.db.collection(PREFIX + "users");
+    // Ensure username is unique at the database level
+    this.users.createIndex({ username: 1 }, { unique: true });
   }
 
   /**
    * register (username: String, password: String): (user: User) | (error: String)
    *
-   * **requires** no User exists with the given `username`
-   * **effects** creates a new `User` `u`; sets the `username` and `password` of `u`; returns `u` as `user`
+   * **requires**: no User exists with the given `username`.
+   * **effects**: creates a new User `u`; sets their `username` and a hash of their `password`; returns `u` as `user`.
    *
-   * **requires** a User already exists with the given `username`
-   * **effects** returns an error message "Username already taken."
+   * **requires**: a User already exists with the given `username`.
+   * **effects**: returns an error message.
    */
   async register(
     { username, password }: { username: string; password: string },
   ): Promise<{ user: User } | { error: string }> {
-    const existingUser = await this.users.findOne({ username });
-    if (existingUser) {
-      return { error: "Username already taken." };
+    // Check if a user with this username already exists.
+    // We also rely on the unique index in MongoDB, but this provides a cleaner error message.
+    try {
+      const existingUser = await this.users.findOne({ username });
+      if (existingUser) {
+        return { error: "Username already exists" };
+      }
+
+      const passwordHash = await hashPassword(password);
+      const newUser: UserDoc = {
+        _id: freshID(),
+        username,
+        passwordHash,
+      };
+
+      await this.users.insertOne(newUser);
+      return { user: newUser._id };
+    } catch (e) {
+      // Catch potential duplicate key error from the database index
+      if (e.code === 11000) {
+        return { error: "Username already exists" };
+      }
+      // For other unexpected errors, re-throw or handle appropriately
+      throw e;
     }
-
-    const newUser: UserDoc = {
-      _id: freshID() as User,
-      username,
-      password,
-    };
-
-    await this.users.insertOne(newUser);
-    return { user: newUser._id };
   }
 
   /**
    * login (username: String, password: String): (user: User) | (error: String)
    *
-   * **requires** a User `u` exists with the given `username` and `password`, and `u` is not in the `LoggedIn` set
-   * **effects** adds `u` to the `LoggedIn` set; returns `u` as `user`
+   * **requires**: a User exists with the given `username` and the `password` matches their `passwordHash`.
+   * **effects**: returns the matching User `u` as `user`.
    *
-   * **requires** no User `u` exists with the given `username` and `password`, or `u` is already in the `LoggedIn` set
-   * **effects** returns an error message "Invalid username or password." or "User already logged in."
+   * **requires**: no User exists with the given `username` or the `password` does not match.
+   * **effects**: returns an error message.
    */
   async login(
     { username, password }: { username: string; password: string },
   ): Promise<{ user: User } | { error: string }> {
-    const user = await this.users.findOne({ username, password });
+    const user = await this.users.findOne({ username });
+
+    // To prevent timing attacks and username enumeration, use a generic error message.
     if (!user) {
-      return { error: "Invalid username or password." };
+      return { error: "Invalid username or password" };
     }
 
-    const isLoggedIn = await this.loggedIn.findOne({ _id: user._id });
-    if (isLoggedIn) {
-      return { error: "User already logged in." };
+    const providedPasswordHash = await hashPassword(password);
+    if (user.passwordHash !== providedPasswordHash) {
+      return { error: "Invalid username or password" };
     }
 
-    await this.loggedIn.insertOne({ _id: user._id });
     return { user: user._id };
-  }
-
-  /**
-   * logout (user: User): (user: User) | (error: String)
-   *
-   * **requires** `user` is in the `LoggedIn` set
-   * **effects** removes `user` from the `LoggedIn` set; returns `user`
-   *
-   * **requires** `user` is not in the `LoggedIn` set
-   * **effects** returns an error message "User is not logged in."
-   */
-  async logout(
-    { user }: { user: User },
-  ): Promise<{ user: User } | { error: string }> {
-    const result = await this.loggedIn.deleteOne({ _id: user });
-    if (result.deletedCount === 0) {
-      return { error: "User is not logged in." };
-    }
-
-    return { user };
-  }
-
-  /**
-   * _isLoggedIn (user: User): (loggedIn: Flag)
-   *
-   * **requires** `user` exists
-   * **effects** returns `true` if `user` is in the `LoggedIn` set, otherwise `false`
-   */
-  async _isLoggedIn(
-    { user }: { user: User },
-  ): Promise<{ loggedIn: boolean }[]> {
-    const userDoc = await this.users.findOne({ _id: user });
-    if (!userDoc) {
-      // Per 'requires' clause, user must exist. Return empty if not found.
-      return [];
-    }
-    const isLoggedIn = await this.loggedIn.findOne({ _id: user });
-    return [{ loggedIn: !!isLoggedIn }];
   }
 
   /**
    * _getUserByUsername (username: String): (user: User)
    *
-   * **requires** a user with the given `username` exists
-   * **effects** returns the User with the matching `username`
+   * **requires**: a User with the given `username` exists.
+   * **effects**: returns the corresponding User.
    */
   async _getUserByUsername(
     { username }: { username: string },
@@ -144,6 +121,7 @@ export default class UserAuthenticationConcept {
     if (user) {
       return [{ user: user._id }];
     }
+    // As per specification, queries must return an array.
     return [];
   }
 }

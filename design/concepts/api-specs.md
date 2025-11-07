@@ -2,7 +2,7 @@
 
 [@api-extraction-from-spec](../tools/api-extraction-from-spec.md)
 # API Specification (Canonical Endpoints)
-Please extract an API for this app from the following 5 concepts.
+Please extract an API for this app from the following concepts.
 
 Do not make up actions, use the actions from the code provided. The endpoints are as follows:
   - Endpoint: POST /api/PersonalQA/ingestFact
@@ -34,14 +34,15 @@ Do not make up actions, use the actions from the code provided. The endpoints ar
   - Endpoint: POST /api/MealLog/_getMealById
   - Endpoint: POST /api/MealLog/_getMealsByOwner
   - Endpoint: POST /api/MealLog/_getMealOwner
+  - Endpoint: POST /api/Sessioning/create
+  - Endpoint: POST /api/Sessioning/delete
+  - Endpoint: POST /api/Sessioning/_getUser
   - Endpoint: POST /api/SwapSuggestions/propose
   - Endpoint: POST /api/SwapSuggestions/accept
   - Endpoint: POST /api/SwapSuggestions/_getProposal
   - Endpoint: POST /api/SwapSuggestions/_getProposalsByOwner
   - Endpoint: POST /api/UserAuthentication/register
   - Endpoint: POST /api/UserAuthentication/login
-  - Endpoint: POST /api/UserAuthentication/logout
-  - Endpoint: POST /api/UserAuthentication/_isLoggedIn
   - Endpoint: POST /api/UserAuthentication/_getUserByUsername
 
 ## PersonalQA
@@ -1215,21 +1216,23 @@ Code: [@SwapSuggestionsImplementation](SwapSuggestions/SwapSuggestionsImplementa
 ```
 ---
 
-Update the API Specification for UserAuthentication.
+# implement: add the UserAuthentication concept and Sessioning concept to the api-spec.
 
-## UserAuthentication
-Code: [@UserAuthenticationImplementation](UserAuthentication/UserAuthenticationImplementation.md)
+[@Sessioning](Sessioning/Sessioning.md)
 
-Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
+[@implementation](Sessioning/implementation.md)
+
+[@UserAuthentication](UserAuthentication/UserAuthentication.md)
+
+[@UserAuthenticationImplementation](UserAuthentication/UserAuthenticationImplementation.md)
 
 # response:
-
 
 # response:
 
 # API Specification: UserAuthentication Concept
 
-**Purpose:** To manage user accounts and sessions, including registration, login, and logout.
+**Purpose:** To securely verify a user's identity based on credentials.
 
 ***
 
@@ -1237,14 +1240,16 @@ Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
 
 ### POST /api/UserAuthentication/register
 
-**Description:** Creates a new user account with a username and password.
+**Description:** Creates a new user account with a unique username and password.
 
 **Requirements:**
-- A user with the given `username` must not already exist.
+- No user exists with the given `username`.
 
 **Effects:**
-- A new user is created with the provided credentials.
-- Returns the ID of the newly created user.
+- Creates a new User `u`.
+- Sets the new user's `username` and a hash of their `password`.
+- Returns the ID of the new user `u` as `user`.
+- If a user with the given `username` already exists, returns an error message.
 
 **Request Body:**
 ```json
@@ -1268,18 +1273,17 @@ Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
 }
 ```
 ---
-
 ### POST /api/UserAuthentication/login
 
-**Description:** Authenticates a user and starts a new session.
+**Description:** Authenticates a user with their username and password.
 
 **Requirements:**
-- A user with the given `username` must exist.
-- The provided `password` must match the user's stored password.
+- A user exists with the given `username`.
+- The provided `password` matches the user's stored password hash.
 
 **Effects:**
-- Creates a new session for the authenticated user.
-- Returns the user's ID and the new session ID.
+- Returns the matching user's ID.
+- If no user exists with the `username` or the `password` does not match, returns an error message.
 
 **Request Body:**
 ```json
@@ -1292,7 +1296,81 @@ Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
 **Success Response Body (Action):**
 ```json
 {
-  "user": "UserID",
+  "user": "UserID"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+### POST /api/UserAuthentication/_getUserByUsername
+
+**Description:** Retrieves a user's ID by their username.
+
+**Requirements:**
+- A user with the given `username` must exist.
+
+**Effects:**
+- Returns the corresponding user's ID.
+
+**Request Body:**
+```json
+{
+  "username": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "user": "UserID"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+***
+
+# API Specification: Sessioning Concept
+
+**Purpose:** To maintain a user's logged-in state across multiple requests without re-sending credentials.
+
+***
+
+## API Endpoints
+
+### POST /api/Sessioning/create
+
+**Description:** Creates a new session for an authenticated user.
+
+**Requirements:**
+- A valid `user` ID must be provided.
+
+**Effects:**
+- Creates a new session `s`.
+- Associates the new session with the given `user`.
+- Returns the new session ID `s` as `session`.
+
+**Request Body:**
+```json
+{
+  "user": "UserID"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
   "session": "SessionID"
 }
 ```
@@ -1304,16 +1382,15 @@ Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
 }
 ```
 ---
+### POST /api/Sessioning/delete
 
-### POST /api/UserAuthentication/logout
-
-**Description:** Ends a user's session, logging them out.
+**Description:** Deletes a session, effectively logging a user out.
 
 **Requirements:**
-- The `session` ID must correspond to an active session.
+- The given `session` ID must exist.
 
 **Effects:**
-- The specified session is invalidated and removed.
+- Removes the specified session `s`.
 
 **Request Body:**
 ```json
@@ -1334,16 +1411,15 @@ Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
 }
 ```
 ---
+### POST /api/Sessioning/_getUser
 
-### POST /api/UserAuthentication/_isLoggedIn
-
-**Description:** Checks if a session ID is currently active and valid.
+**Description:** Retrieves the user associated with a given session.
 
 **Requirements:**
-- The `session` ID must be provided.
+- The given `session` ID must exist.
 
 **Effects:**
-- Returns the user ID associated with the session if it is active.
+- Returns the user ID associated with the session.
 
 **Request Body:**
 ```json
@@ -1368,38 +1444,5 @@ Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
 }
 ```
 ---
+# response:
 
-### POST /api/UserAuthentication/_getUserByUsername
-
-**Description:** Retrieves a user's information by their username.
-
-**Requirements:**
-- A user with the given `username` must exist.
-
-**Effects:**
-- Returns the user record matching the username.
-
-**Request Body:**
-```json
-{
-  "username": "string"
-}
-```
-
-**Success Response Body (Query):**
-```json
-[
-  {
-    "_id": "UserID",
-    "username": "string"
-  }
-]
-```
-
-**Error Response Body:**
-```json
-{
-  "error": "string"
-}
-```
----

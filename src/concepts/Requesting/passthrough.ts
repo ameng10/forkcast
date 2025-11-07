@@ -25,12 +25,9 @@
  */
 
 export const inclusions: Record<string, string> = {
-  // Feel free to delete these example inclusions
-  "/api/LikertSurvey/_getSurveyQuestions": "this is a public query",
-  "/api/LikertSurvey/_getSurveyResponses": "responses are public",
-  "/api/LikertSurvey/_getRespondentAnswers": "answers are visible",
-  "/api/LikertSurvey/submitResponse": "allow anyone to submit response",
-  "/api/LikertSurvey/updateResponse": "allow anyone to update their response",
+  // Public auth endpoints (entry points)
+  "/api/UserAuthentication/register": "public endpoint to create account",
+  "/api/UserAuthentication/login": "public endpoint to start session",
 };
 
 /**
@@ -47,43 +44,57 @@ export const exclusions: Array<string> = [
   // Feel free to delete these example exclusions
   "/api/LikertSurvey/createSurvey",
   "/api/LikertSurvey/addQuestion",
-  // --- Excluded routes for syncing (non-LikertSurvey) ---
+
   // InsightMining
-  // "/api/InsightMining/ingest",
-  // "/api/InsightMining/analyze",
-  // "/api/InsightMining/summarize",
-  // "/api/InsightMining/deactivate",
-  // "/api/InsightMining/_getObservationsForUser",
-  // "/api/InsightMining/_getInsightsForUser",
-  // "/api/InsightMining/_getReport",
-  // // MealLog
-  // "/api/MealLog/getCollection",
-  // "/api/MealLog/submit",
-  // "/api/MealLog/edit",
-  // "/api/MealLog/delete",
-  // "/api/MealLog/getMealsForOwner",
-  // "/api/MealLog/getMealById",
-  // // PersonalQA
-  // "/api/PersonalQA/ingestFact",
-  // "/api/PersonalQA/forgetFact",
-  // "/api/PersonalQA/ask",
-  // "/api/PersonalQA/askLLM",
-  // "/api/PersonalQA/setTemplate",
-  // "/api/PersonalQA/_getUserFacts",
-  // "/api/PersonalQA/_getUserQAs",
-  // "/api/PersonalQA/_getUserDrafts",
-  // // QuickCheckIns
-  // "/api/QuickCheckIns/record",
-  // "/api/QuickCheckIns/defineMetric",
-  // "/api/QuickCheckIns/edit",
-  // "/api/QuickCheckIns/delete",
-  // "/api/QuickCheckIns/_getCheckIn",
-  // "/api/QuickCheckIns/_getMetricsByName",
-  // "/api/QuickCheckIns/deleteMetric",
-  // "/api/QuickCheckIns/_listCheckInsByOwner",
-  // // SwapSuggestions
-  // "/api/SwapSuggestions/propose",
-  // "/api/SwapSuggestions/accept",
-  // "/api/SwapSuggestions/_getProposal",
-  // "/api/SwapSuggestions/_getProposalsByOwner",
+  "/api/InsightMining/ingest",
+  "/api/InsightMining/analyze",
+  "/api/InsightMining/summarize",
+  "/api/InsightMining/deactivate",
+  "/api/InsightMining/_getObservationsForUser",
+  "/api/InsightMining/_getInsightsForUser",
+  "/api/InsightMining/_getReport",
+
+  // MealLog (updated routes with underscores per server output)
+  "/api/MealLog/submit",
+  "/api/MealLog/edit",
+  "/api/MealLog/delete",
+  "/api/MealLog/_getMealById",
+  "/api/MealLog/_getMealsByOwner",
+  "/api/MealLog/_getMealOwner",
+
+  // PersonalQA
+  "/api/PersonalQA/ingestFact",
+  "/api/PersonalQA/forgetFact",
+  "/api/PersonalQA/ask",
+  "/api/PersonalQA/askLLM",
+  "/api/PersonalQA/setTemplate",
+  "/api/PersonalQA/_getUserFacts",
+  "/api/PersonalQA/_getUserQAs",
+  "/api/PersonalQA/_getUserDrafts",
+
+  // QuickCheckIns
+  "/api/QuickCheckIns/record",
+  "/api/QuickCheckIns/defineMetric",
+  "/api/QuickCheckIns/edit",
+  "/api/QuickCheckIns/delete",
+  "/api/QuickCheckIns/deleteMetric",
+  "/api/QuickCheckIns/_getCheckIn",
+  "/api/QuickCheckIns/_getMetricsByName",
+  "/api/QuickCheckIns/_listCheckInsByOwner",
+
+  // SwapSuggestions
+  "/api/SwapSuggestions/propose",
+  "/api/SwapSuggestions/accept",
+  "/api/SwapSuggestions/_getProposal",
+  "/api/SwapSuggestions/_getProposalsByOwner",
+
+  // Sessioning (route via syncs)
+  "/api/Sessioning/create",
+  "/api/Sessioning/delete",
+  "/api/Sessioning/_getUser",
+
+  // UserAuthentication (restrict potentially sensitive lookup)
+  "/api/UserAuthentication/_getUserByUsername",
+  "/api/UserAuthentication/register",
+  "/api/UserAuthentication/login",
 ];

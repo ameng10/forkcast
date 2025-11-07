@@ -5,11 +5,9 @@
     "children": [
       {
         "id": "058c3c8bcc5c6ba9",
-        "id": "058c3c8bcc5c6ba9",
         "type": "tabs",
         "children": [
           {
-            "id": "15b82e147f4d6b86",
             "id": "15b82e147f4d6b86",
             "type": "leaf",
             "state": {
@@ -17,13 +15,12 @@
               "state": {},
               "type": "markdown",
               "state": {
-                "file": "design/concepts/api-specs.md",
+                "file": "design/brainstorming/syncs.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "New tab"
-              "title": "api-specs"
+              "title": "syncs"
             }
           }
         ]
@@ -176,44 +173,43 @@
     }
   },
   "active": "15b82e147f4d6b86",
-  "active": "15b82e147f4d6b86",
   "lastOpenFiles": [
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/20251107_111326.40406fb8.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/API Specification.47ffa44c.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/20251107_111304.eecc5e81.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/20251107_111252.2ae0a383.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/API Specification.0b576f8e.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/_.83017c46.md",
-    "design/concepts/UserAuthentication/UserAuthenticationImplementation.md",
-    "design/concepts/api-specs.md",
-    "design/concepts/UserAuthentication/UserAuthentication.md",
-    "design/concepts/UserAuthentication/implementation.md",
-    "src/concepts/UserAuthentication/UserAuthenticationConsoleOutput.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/20251107_110816.22568902.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/file.5bc46733.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/20251107_110740.17841089.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/test.c9055c66.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/file.b5847480.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/implement.0668d876.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/concept.a5fa9c27.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/implement.4da8d45d.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/_.821458d0.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/_.880e9993.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/_.6f2ac641.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/_.069d7627.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/_.c84c6c83.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/_.40872180.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps/_.9b41d7d0.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/testing.md/steps",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/implementation.md/steps",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication/UserAuthentication.md/steps",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/UserAuthentication",
-    "src/concepts/UserAuthentication/UserAuthenticationConcept.ts",
-    "src/concepts/UserAuthentication/UserAuthenticationConcept.test.ts",
-    "src/concepts/UserAuthentication/UserAthenticationConcept.ts",
-    "src/concepts/UserAuthentication",
-    "design/concepts/UserAuthentication",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/InsightMining/InsightMining.md/steps",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/20251107_161014.59db7968.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/file.2ea53d90.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/20251107_160853.e8729cb5.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/concept.e4b9b046.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/concept.1fe72996.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/response.841531b3.md",
+    "design/brainstorming/userauthenticationsync.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/20251107_150814.e2d4e850.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/file.81d4f302.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/file.61cd23eb.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/file.3d0ecaea.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/20251107_150634.52d4cdbc.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/implement.d5c05167.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/20251107_150554.6816446d.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/20251107_133240.dd3cbf54.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/file.77b7d3c3.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/file.884dc9a6.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/20251107_133120.e9d9a6b0.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/implement.6f7e27bc.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/concept.63984f3c.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/concept.a5093cd5.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/implement.ddb2d25b.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/Concept State.04ba11a9.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/concept.20fb72c8.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/implement.a44560b9.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/Concept State.2d7277aa.md",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/personalqasync.md/steps",
+    "src/syncs/insightmining.sync.ts",
+    "src/syncs/personalqa.sync.ts",
+    "src/syncs/quickcheckins.sync.ts",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/quickcheckinssync.md/steps",
+    "src/syncs/meallog.sync.ts",
+    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps",
+    "src/syncs/auth.sync.ts",
+    "design/concepts/Sessioning",
     "Untitled.canvas"
   ]
 }

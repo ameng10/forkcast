@@ -275,4 +275,17 @@ export default class QuickCheckInsConcept {
   ): Promise<CheckInDocument[]> {
     return await this.checkIns.find({ owner }).toArray();
   }
+
+  /**
+   * _listMetricsForOwner (owner: User): (InternalMetricDocument[])
+   *
+   * @effects Returns all internal metrics. Metrics are global, so the owner argument is currently ignored.
+   */
+  async _listMetricsForOwner(
+    { owner }: { owner: User },
+  ): Promise<InternalMetricDocument[]> {
+    // Metrics are not scoped per user yet, but the owner argument allows callers to pass-through their identity.
+    void owner;
+    return await this.internalMetrics.find({}).toArray();
+  }
 }

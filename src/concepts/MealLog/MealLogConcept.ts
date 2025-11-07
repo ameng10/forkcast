@@ -22,7 +22,7 @@ type Meal = ID;
  * Represents a food item within a meal. This is treated as a value object,
  * not a generic entity reference, so it's defined as a structured type.
  */
-interface FoodItem {
+export interface FoodItem {
   id: string;
   name: string;
   // Other properties like calories, quantity, etc., could be included.

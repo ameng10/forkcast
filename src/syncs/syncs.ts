@@ -4,14 +4,38 @@
 
 import type { Sync } from "@engine";
 
-import * as sync_sample from "./sample.sync.ts";
+import * as sync_personalqa from "./personalqa.sync.ts";
+import * as sync_quickcheckins from "./quickcheckins.sync.ts";
+import * as sync_auth from "./auth.sync.ts";
+import * as sync_insightmining from "./insightmining.sync.ts";
+import * as sync_meallog from "./meallog.sync.ts";
 
 const allSyncs: Record<string, Sync> = {};
 
 
-for (const [name, func] of Object.entries(sync_sample)) {
+for (const [name, func] of Object.entries(sync_personalqa)) {
   if (typeof func === "function") {
-    allSyncs[`sample.${name}`] = func as Sync;
+    allSyncs[`personalqa.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_quickcheckins)) {
+  if (typeof func === "function") {
+    allSyncs[`quickcheckins.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_auth)) {
+  if (typeof func === "function") {
+    allSyncs[`auth.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_insightmining)) {
+  if (typeof func === "function") {
+    allSyncs[`insightmining.${name}`] = func as Sync;
+  }
+}
+for (const [name, func] of Object.entries(sync_meallog)) {
+  if (typeof func === "function") {
+    allSyncs[`meallog.${name}`] = func as Sync;
   }
 }
 

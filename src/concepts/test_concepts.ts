@@ -13,7 +13,9 @@ import QuickCheckInsConcept from "./QuickCheckIns/QuickCheckInsConcept.ts";
 import LikertSurveyConcept from "./LikertSurvey/LikertSurveyConcept.ts";
 import MealLogConcept from "./MealLog/MealLogConcept.ts";
 import RequestingConcept from "./Requesting/RequestingConcept.ts";
+import SessioningConcept from "./Sessioning/SessioningConcept.ts";
 import SwapSuggestionsConcept from "./SwapSuggestions/SwapSuggestionsConcept.ts";
+import UserAuthenticationConcept from "./UserAuthentication/UserAuthenticationConcept.ts";
 
 export type { default as PersonalQAConcept } from "./PersonalQA/PersonalQAConcept.ts";
 export type { default as InsightMiningConcept } from "./InsightMining/InsightMiningConcept.ts";
@@ -21,7 +23,9 @@ export type { default as QuickCheckInsConcept } from "./QuickCheckIns/QuickCheck
 export type { default as LikertSurveyConcept } from "./LikertSurvey/LikertSurveyConcept.ts";
 export type { default as MealLogConcept } from "./MealLog/MealLogConcept.ts";
 export type { default as RequestingConcept } from "./Requesting/RequestingConcept.ts";
+export type { default as SessioningConcept } from "./Sessioning/SessioningConcept.ts";
 export type { default as SwapSuggestionsConcept } from "./SwapSuggestions/SwapSuggestionsConcept.ts";
+export type { default as UserAuthenticationConcept } from "./UserAuthentication/UserAuthenticationConcept.ts";
 
 // Initialize the database connection
 export const [db, client] = await testDb();
@@ -32,4 +36,6 @@ export const QuickCheckIns = Engine.instrumentConcept(new QuickCheckInsConcept(d
 export const LikertSurvey = Engine.instrumentConcept(new LikertSurveyConcept(db));
 export const MealLog = Engine.instrumentConcept(new MealLogConcept(db));
 export const Requesting = Engine.instrumentConcept(new RequestingConcept(db));
+export const Sessioning = Engine.instrumentConcept(new SessioningConcept(db));
 export const SwapSuggestions = Engine.instrumentConcept(new SwapSuggestionsConcept(db));
+export const UserAuthentication = Engine.instrumentConcept(new UserAuthenticationConcept(db));
