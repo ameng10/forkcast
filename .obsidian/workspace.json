@@ -174,6 +174,11 @@
   },
   "active": "15b82e147f4d6b86",
   "lastOpenFiles": [
+    "src/syncs/Cookingexamplesync.ts",
+    "src/syncs/Cookingexampleconcept.ts",
+    "src/syncs/exampleconcept.ts",
+    "src/syncs/anotherexamplesync.ts",
+    "src/syncs/examplesync.ts",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/20251107_161014.59db7968.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps/file.2ea53d90.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/20251107_160853.e8729cb5.md",
@@ -199,17 +204,12 @@
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/Concept State.04ba11a9.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/concept.20fb72c8.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/implement.a44560b9.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps/Concept State.2d7277aa.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/insightminingsync.md/steps",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/personalqasync.md/steps",
     "src/syncs/insightmining.sync.ts",
     "src/syncs/personalqa.sync.ts",
     "src/syncs/quickcheckins.sync.ts",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/quickcheckinssync.md/steps",
-    "src/syncs/meallog.sync.ts",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/meallogsync.md/steps",
-    "src/syncs/auth.sync.ts",
-    "design/concepts/Sessioning",
     "Untitled.canvas"
   ]
 }

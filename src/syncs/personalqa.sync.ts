@@ -4,12 +4,12 @@ import { PersonalQA, Requesting, Sessioning } from "@concepts";
 // --- Ingest Fact ---
 
 export const IngestFactRequest: Sync = (
-  { session, user, at, content, source },
+  { request, session, user, at, content, source },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/personalqa/ingestFact", session, at, content, source },
-    {},
+    { path: "/PersonalQA/ingestFact", session, at, content, source },
+    { request },
   ]),
   where: async (frames) =>
     await frames.query(Sessioning._getUser, { session }, { user }),
@@ -21,7 +21,7 @@ export const IngestFactRequest: Sync = (
 
 export const IngestFactResponse: Sync = ({ request, fact }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/ingestFact" }, { request }],
+    [Requesting.request, { path: "/PersonalQA/ingestFact" }, { request }],
     [PersonalQA.ingestFact, {}, { fact }],
   ),
   then: actions([Requesting.respond, { request, fact }]),
@@ -29,12 +29,14 @@ export const IngestFactResponse: Sync = ({ request, fact }) => ({
 
 // --- Forget Fact ---
 
-export const ForgetFactRequest: Sync = ({ session, user, factId }) => ({
+export const ForgetFactRequest: Sync = (
+  { request, session, user, factId },
+) => ({
   when: actions(
     [
       Requesting.request,
-      { path: "/personalqa/forgetFact", session, factId },
-      {},
+      { path: "/PersonalQA/forgetFact", session, factId },
+      { request },
     ],
   ),
   where: async (frames) =>
@@ -48,7 +50,7 @@ export const ForgetFactRequest: Sync = ({ session, user, factId }) => ({
 
 export const ForgetFactResponseSuccess: Sync = ({ request, ok }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/forgetFact" }, { request }],
+    [Requesting.request, { path: "/PersonalQA/forgetFact" }, { request }],
     [PersonalQA.forgetFact, {}, { ok }],
   ),
   then: actions([Requesting.respond, { request, ok }]),
@@ -56,7 +58,7 @@ export const ForgetFactResponseSuccess: Sync = ({ request, ok }) => ({
 
 export const ForgetFactResponseError: Sync = ({ request, error }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/forgetFact" }, { request }],
+    [Requesting.request, { path: "/PersonalQA/forgetFact" }, { request }],
     [PersonalQA.forgetFact, {}, { error }],
   ),
   then: actions([Requesting.respond, { request, error }]),
@@ -64,9 +66,11 @@ export const ForgetFactResponseError: Sync = ({ request, error }) => ({
 
 // --- Ask ---
 
-export const AskRequest: Sync = ({ session, user, question }) => ({
+export const AskRequest: Sync = ({ request, session, user, question }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/ask", session, question }, {}],
+    [Requesting.request, { path: "/PersonalQA/ask", session, question }, {
+      request,
+    }],
   ),
   where: async (frames) =>
     await frames.query(Sessioning._getUser, { session }, { user }),
@@ -75,7 +79,7 @@ export const AskRequest: Sync = ({ session, user, question }) => ({
 
 export const AskResponse: Sync = ({ request, qa }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/ask" }, { request }],
+    [Requesting.request, { path: "/PersonalQA/ask" }, { request }],
     [PersonalQA.ask, {}, { qa }],
   ),
   then: actions([Requesting.respond, { request, qa }]),
@@ -83,12 +87,14 @@ export const AskResponse: Sync = ({ request, qa }) => ({
 
 // --- Ask LLM ---
 
-export const AskLLMRequest: Sync = ({ session, user, question, k }) => ({
+export const AskLLMRequest: Sync = (
+  { request, session, user, question, k },
+) => ({
   when: actions(
     [
       Requesting.request,
-      { path: "/personalqa/askLLM", session, question, k },
-      {},
+      { path: "/PersonalQA/askLLM", session, question, k },
+      { request },
     ],
   ),
   where: async (frames) =>
@@ -98,7 +104,7 @@ export const AskLLMRequest: Sync = ({ session, user, question, k }) => ({
 
 export const AskLLMResponse: Sync = ({ request, qa }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/askLLM" }, { request }],
+    [Requesting.request, { path: "/PersonalQA/askLLM" }, { request }],
     [PersonalQA.askLLM, {}, { qa }],
   ),
   then: actions([Requesting.respond, { request, qa }]),
@@ -107,13 +113,13 @@ export const AskLLMResponse: Sync = ({ request, qa }) => ({
 // --- Set Template ---
 
 export const SetTemplateRequest: Sync = (
-  { session, user, name, template },
+  { request, session, user, name, template },
 ) => ({
   when: actions(
     [
       Requesting.request,
-      { path: "/personalqa/setTemplate", session, name, template },
-      {},
+      { path: "/PersonalQA/setTemplate", session, name, template },
+      { request },
     ],
   ),
   where: async (frames) =>
@@ -123,7 +129,7 @@ export const SetTemplateRequest: Sync = (
 
 export const SetTemplateResponse: Sync = ({ request, ok }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/setTemplate" }, { request }],
+    [Requesting.request, { path: "/PersonalQA/setTemplate" }, { request }],
     [PersonalQA.setTemplate, {}, { ok }],
   ),
   then: actions([Requesting.respond, { request, ok }]),
@@ -135,7 +141,7 @@ export const GetUserFactsRequest: Sync = (
   { request, session, user, facts },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/facts", session }, { request }],
+    [Requesting.request, { path: "/PersonalQA/facts", session }, { request }],
   ),
   where: async (frames) => {
     const userFrames = await frames.query(Sessioning._getUser, { session }, {
@@ -153,7 +159,7 @@ export const GetUserFactsRequest: Sync = (
 
 export const GetUserQAsRequest: Sync = ({ request, session, user, qas }) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/qas", session }, { request }],
+    [Requesting.request, { path: "/PersonalQA/qas", session }, { request }],
   ),
   where: async (frames) => {
     const userFrames = await frames.query(Sessioning._getUser, { session }, {
@@ -173,7 +179,7 @@ export const GetUserDraftsRequest: Sync = (
   { request, session, user, drafts },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "/personalqa/drafts", session }, { request }],
+    [Requesting.request, { path: "/PersonalQA/drafts", session }, { request }],
   ),
   where: async (frames) => {
     const userFrames = await frames.query(Sessioning._getUser, { session }, {
