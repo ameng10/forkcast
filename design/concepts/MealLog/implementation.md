@@ -8,456 +8,267 @@
 
 [@concept-state](../../background/detailed/concept-state.md)
 
-# implement: MealLog using the following framework. Fix any formatting and modularity issues and make sure the specification matches code made. Write the code in typescript. Edit the following so that you use MongoDB when a database is needed and use asyncs when needed. Remember that this is an app that many users will use at the same time, but only the user will be able to access their own meal logs.
+[@MealLogImplementation](MealLogImplementation.md)
 
-### Concept: MealLog [User, FoodItem]
+[@sync-background](../../tools/sync-background.md)
+# implement: Change the mealLogImplementation so that the behavior is the same but the code follows the correct specifications and design standard. Make srue the behavior of the code is not changed. The code should work so that the sync engine works.
 
-**purpose** Capture meals quickly with minimal friction.
+# response:
 
-**principle** A user records a meal with time, items, and an optional note; meals can be edited or deleted. This concept stores facts only.
+# response:
 
-**state**
+# concept: MealLog
 
-- A set of Meals with:
-    - owner: User
-    - at: Time
-    - items: Set(FoodItem)
-    - notes: String (optional)
-    - status: {active, deleted}
+```
+concept MealLog [User]
 
-**actions**
+purpose Capture meals quickly with minimal friction.
 
-- `submit(owner: User, at: Time, items: Set(FoodItem), notes?: String): (meal: Meal)`
-    - **requires:** owner exists and items is nonempty
-    - **effects:** create an active meal and return it
-- `edit(meal: Meal, items?: Set(FoodItem), notes?: String)`
-    - **requires:** meal exists and caller is the owner and status is active
-    - **effects:** update provided fields
-- `delete(meal: Meal)`
-    - **requires:** meal exists and caller is the owner and status is active
-    - **effects:** set status = deleted
+principle A user records a meal with a time and a set of food items. They can later edit the meal's items or notes, or delete the meal entirely. Access to a meal log is restricted to its owner.
 
+state
+  a set of Meals with
+    an owner User
+    an at Date
+    an items set of FoodItem
+    an optional notes String
+    a status of ACTIVE or DELETED
 
-## Code Implementation
+actions
+  submit (owner: User, at: Date, items: set of FoodItem, notes: optional String): (meal: Meal)
+  edit (caller: User, meal: Meal, at: optional Date, items: optional set of FoodItem, notes: optional String): ()
+  edit (caller: User, meal: Meal, at: optional Date, items: optional set of FoodItem, notes: optional String): (error: String)
+  delete (caller: User, meal: Meal): ()
+  delete (caller: User, meal: Meal): (error: String)
 
-To run this code, you'll need:
-1.  Node.js (v14+ for `crypto.randomUUID()`)
-2.  `mongodb` package: `npm install mongodb`
+queries
+  _getMealById (meal: Meal): (meal: Meal)
+  _getMealsByOwner (owner: User, includeDeleted: optional Flag): (meal: Meal)
+  _getMealOwner (meal: Meal): (owner: User)
+```
+
+# file: src/MealLog/MealLogConcept.ts
 
 ```typescript
-// --- Required Imports ---
-import { MongoClient, Collection, WithId, Document } from 'mongodb'; // MongoDB driver
+import { Collection, Db } from "npm:mongodb";
+import { Empty, ID } from "@utils/types.ts";
+import { freshID } from "@utils/database.ts";
 
-// --- Generic Type Definitions ---
-// These interfaces define the minimal structure required for generic User and FoodItem types.
-// In a real application, these would be richer interfaces or classes managed by other concepts.
-// We assume User has a unique 'id' for comparison purposes.
-type UserId = string;
+// Declare collection prefix, use concept name
+const PREFIX = "MealLog";
 
-interface User {
-    id: UserId;
-    // Add other relevant user properties here, e.g., name: string;
-}
+// --- Generic Type Definitions & State ---
 
-// For FoodItem, we assume it's an object with an ID and perhaps other properties
-// that we want to embed directly into the meal document for a denormalized collection.
+/**
+ * Generic parameter for the user who owns the meal log.
+ * Treated as an opaque ID.
+ */
+type User = ID;
+
+/**
+ * Generic parameter for a single meal entry.
+ */
+type Meal = ID;
+
+/**
+ * Represents a food item within a meal. This is treated as a value object,
+ * not a generic entity reference, so it's defined as a structured type.
+ */
 interface FoodItem {
-    id: string; // Unique ID for the food item (e.g., from a central food database)
-    name: string; // The display name of the food item
-    // You can add more properties here if they are part of the FoodItem concept,
-    // e.g., calories: number, category: string, etc.
+  id: string;
+  name: string;
+  // Other properties like calories, quantity, etc., could be included.
 }
 
-// --- State Modeling Language Enums and Errors ---
-
+/**
+ * Enumeration for the status of a meal entry.
+ */
 enum MealStatus {
-    ACTIVE = "active",
-    DELETED = "deleted",
+  ACTIVE = "ACTIVE",
+  DELETED = "DELETED",
 }
 
 /**
- * Custom Error class for permission-related failures.
+ * MongoDB document structure for a Meal.
+ * Mapped from the SSF:
+ * a set of Meals with
+ *   an owner User
+ *   an at Date
+ *   an items set of FoodItem
+ *   an optional notes String
+ *   a status of ACTIVE or DELETED
  */
-class PermissionError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "PermissionError";
-    }
-}
-
-// --- MongoDB Document Structure ---
-// This interface defines how a Meal document is stored in MongoDB.
-// It uses `ownerId` to reference a User, and embeds `FoodItem` objects directly.
 interface MealDocument {
-    _id: string; // MongoDB's unique ID for the meal, typically a UUID generated by the app.
-    ownerId: UserId; // The ID of the user who owns this meal.
-    at: Date; // The date and time the meal was consumed.
-    items: FoodItem[]; // An array of embedded FoodItem objects.
-    notes?: string; // Optional notes for the meal.
-    status: MealStatus; // The current status of the meal (active/deleted).
+  _id: Meal;
+  owner: User;
+  at: Date;
+  items: FoodItem[];
+  notes?: string;
+  status: MealStatus;
 }
 
-// --- Meal Class (In-memory representation of a Meal) ---
 /**
- * Represents a single meal entry within the MealLog concept.
- * It is generic over the User and FoodItem types, hydrating `ownerId` into a `User` object.
+ * @concept MealLog [User]
+ * @purpose Capture meals quickly with minimal friction.
+ * @principle A user records a meal with a time and a set of food items. They can later edit the meal's items or notes, or delete the meal entirely. Access to a meal log is restricted to its owner.
  */
-class Meal<U extends User, F extends FoodItem> {
-    public readonly id: string; // Unique identifier for the meal (UUID)
-    public readonly owner: U;
-    public at: Date;
-    public items: F[];
-    public notes?: string;
-    public status: MealStatus;
+export default class MealLogConcept {
+  public readonly meals: Collection<MealDocument>;
 
-    /**
-     * Private constructor to enforce creation via static factory methods
-     * (e.g., `createNewMeal`) or controlled instantiation (e.g., `fromDocument`).
-     */
-    private constructor(
-        id: string,
-        owner: U,
-        at: Date,
-        items: F[],
-        status: MealStatus,
-        notes?: string
-    ) {
-        this.id = id;
-        this.owner = owner;
-        this.at = at;
-        this.items = items;
-        this.notes = notes;
-        this.status = status;
+  constructor(db: Db) {
+    this.meals = db.collection<MealDocument>(PREFIX);
+  }
+
+  //
+  // ACTIONS
+  //
+
+  /**
+   * submit (owner: User, at: Date, items: set of FoodItem, notes: optional String): (meal: Meal)
+   *
+   * **requires** `items` array is not empty.
+   *
+   * **effects** Creates a new Meal document with status ACTIVE, owned by `owner`, and returns its ID.
+   */
+  async submit(
+    { owner, at, items, notes }: { owner: User; at: Date; items: FoodItem[]; notes?: string },
+  ): Promise<{ meal: Meal } | { error: string }> {
+    if (!items || items.length === 0) {
+      return { error: "A meal must contain at least one food item." };
     }
 
-    /**
-     * Factory method for creating a new Meal based on concept's `submit` action parameters.
-     * This handles initial status and ID generation.
-     * @param owner The user who owns this meal.
-     * @param at The date and time the meal was consumed.
-     * @param items An array of food items included in the meal.
-     * @param notes Optional notes for the meal.
-     * @returns A new `Meal` instance.
-     * @throws Error if owner is invalid or items is empty.
-     */
-    public static createNewMeal<U extends User, F extends FoodItem>(
-        owner: U,
-        at: Date,
-        items: F[],
-        notes?: string
-    ): Meal<U, F> {
-        if (!owner || !owner.id) {
-            throw new Error("Meal owner cannot be undefined or null and must have an ID.");
-        }
-        if (!items || items.length === 0) {
-            throw new Error("A meal must contain at least one food item.");
-        }
-        // Generate a unique ID for the meal (e.g., using Node.js's crypto module or a UUID library).
-        const newMealId = crypto.randomUUID();
-        return new Meal(newMealId, owner, at, items, MealStatus.ACTIVE, notes);
+    const mealId = freshID() as Meal;
+    const mealDoc: MealDocument = {
+      _id: mealId,
+      owner,
+      at,
+      items,
+      notes,
+      status: MealStatus.ACTIVE,
+    };
+
+    await this.meals.insertOne(mealDoc);
+    return { meal: mealId };
+  }
+
+  /**
+   * edit (caller: User, meal: Meal, at: optional Date, items: optional set of FoodItem, notes: optional String): () | (error: String)
+   *
+   * **requires**
+   * - A Meal with the given `meal` ID exists.
+   * - The `caller` is the owner of the meal.
+   * - The meal's status is ACTIVE.
+   * - If `items` is provided, it must not be empty.
+   *
+   * **effects** Updates the `at`, `items`, and/or `notes` fields of the specified Meal document.
+   */
+  async edit(
+    { caller, meal, at, items, notes }: { caller: User; meal: Meal; at?: Date; items?: FoodItem[]; notes?: string },
+  ): Promise<Empty | { error: string }> {
+    const mealDoc = await this.meals.findOne({ _id: meal });
+
+    if (!mealDoc) {
+      return { error: `Meal with ID '${meal}' does not exist.` };
+    }
+    if (mealDoc.owner !== caller) {
+      return { error: "Caller is not the owner of this meal." };
+    }
+    if (mealDoc.status !== MealStatus.ACTIVE) {
+      return { error: `Cannot edit a meal that is not active. Current status: ${mealDoc.status}` };
+    }
+    if (items !== undefined && items.length === 0) {
+      return { error: "Items array cannot be empty when updating." };
     }
 
-    /**
-     * Factory method for hydrating a Meal object from a MongoDB document.
-     * @param doc The MongoDB document to convert.
-     * @param owner The hydrated User object corresponding to `doc.ownerId`.
-     * @returns A `Meal` instance.
-     */
-    public static fromDocument<U extends User, F extends FoodItem>(doc: WithId<MealDocument>, owner: U): Meal<U, F> {
-        return new Meal(
-            doc._id,
-            owner,
-            doc.at,
-            doc.items as F[], // Type assertion for generic FoodItem
-            doc.status,
-            doc.notes
-        );
+    const updateFields: Partial<Pick<MealDocument, "at" | "items" | "notes">> = {};
+    if (at !== undefined) {
+      updateFields.at = at;
+    }
+    if (items !== undefined) {
+      updateFields.items = items;
+    }
+    if (notes !== undefined) {
+      updateFields.notes = notes;
     }
 
-    /**
-     * Converts the current Meal object into a MongoDB document structure for storage.
-     * @returns A `MealDocument` representation of the meal.
-     */
-    public toDocument(): MealDocument {
-        return {
-            _id: this.id,
-            ownerId: this.owner.id,
-            at: this.at,
-            items: this.items,
-            notes: this.notes,
-            status: this.status,
-        };
+    if (Object.keys(updateFields).length > 0) {
+      await this.meals.updateOne({ _id: meal }, { $set: updateFields });
     }
 
-    /**
-     * Provides a string representation for debugging and logging.
-     */
-    public toString(): string {
-        return (
-            `Meal(ID=${this.id.substring(0, 8)}..., OwnerID=${this.owner.id}, ` +
-            `Time=${this.at.toISOString()}, Status=${this.status})`
-        );
+    return {};
+  }
+
+  /**
+   * delete (caller: User, meal: Meal): () | (error: String)
+   *
+   * **requires**
+   * - A Meal with the given `meal` ID exists.
+   * - The `caller` is the owner of the meal.
+   * - The meal's status is ACTIVE.
+   *
+   * **effects** Sets the status of the specified Meal document to DELETED.
+   */
+  async delete(
+    { caller, meal }: { caller: User; meal: Meal },
+  ): Promise<Empty | { error: string }> {
+    const mealDoc = await this.meals.findOne({ _id: meal });
+
+    if (!mealDoc) {
+      return { error: `Meal with ID '${meal}' does not exist.` };
     }
-}
-
-// --- MealLog Concept Implementation ---
-/**
- * Concept: MealLog [User, FoodItem]
- *
- * Purpose: Capture meals quickly with minimal friction.
- *
- * Principle: A user records a meal with time, items, and an optional note;
- *            meals can be edited or deleted. This concept stores facts only.
- *
- * This class implements the MealLog concept, managing a collection of Meal objects
- * persisted in MongoDB. It ensures that actions adhere to the defined requirements and effects.
- */
-class MealLog<U extends User, F extends FoodItem> {
-    private dbClient: MongoClient;
-    private dbName: string;
-    private mealsCollection: Collection<MealDocument>;
-    // A resolver function to fetch a full User object given a UserId.
-    // This maintains the independence of the MealLog concept from the User concept's implementation.
-    private userResolver: (userId: UserId) => Promise<U | undefined>;
-
-    /**
-     * Initializes the MealLog concept.
-     * @param mongoUri The MongoDB connection URI (e.g., "mongodb://localhost:27017").
-     * @param dbName The name of the database to use.
-     * @param userResolver An asynchronous function to retrieve a User object by its ID.
-     */
-    constructor(
-        mongoUri: string,
-        dbName: string,
-        userResolver: (userId: UserId) => Promise<U | undefined>
-    ) {
-        this.dbClient = new MongoClient(mongoUri);
-        this.dbName = dbName;
-        this.userResolver = userResolver;
+    if (mealDoc.owner !== caller) {
+      return { error: "Caller is not the owner of this meal." };
+    }
+    if (mealDoc.status !== MealStatus.ACTIVE) {
+      return { error: `Cannot delete a meal that is not active. Current status: ${mealDoc.status}` };
     }
 
-    /**
-     * Establishes the connection to MongoDB and sets up the collection.
-     * Must be called before any other database operations.
-     */
-    public async connect(): Promise<void> {
-        await this.dbClient.connect();
-        this.mealsCollection = this.dbClient.db(this.dbName).collection<MealDocument>("Meals");
-        console.log("Connected to MongoDB and MealLog collection initialized.");
+    await this.meals.updateOne({ _id: meal }, { $set: { status: MealStatus.DELETED } });
+
+    return {};
+  }
+
+  //
+  // QUERIES
+  //
+
+  /**
+   * _getMealById (meal: Meal): (meal: MealDocument)
+   *
+   * **requires** A meal with the given ID exists.
+   * **effects** Returns the full Meal document.
+   */
+  async _getMealById({ meal }: { meal: Meal }): Promise<{ meal: MealDocument }[]> {
+    const doc = await this.meals.findOne({ _id: meal });
+    return doc ? [{ meal: doc }] : [];
+  }
+
+  /**
+   * _getMealsByOwner (owner: User, includeDeleted: optional Flag): (meal: MealDocument)
+   *
+   * **requires** true
+   * **effects** Returns all Meal documents owned by the specified user.
+   */
+  async _getMealsByOwner(
+    { owner, includeDeleted = false }: { owner: User; includeDeleted?: boolean },
+  ): Promise<{ meal: MealDocument }[]> {
+    const query: { owner: User; status?: MealStatus } = { owner };
+    if (!includeDeleted) {
+      query.status = MealStatus.ACTIVE;
     }
+    const docs = await this.meals.find(query).toArray();
+    return docs.map((doc) => ({ meal: doc }));
+  }
 
-    /**
-     * Closes the MongoDB connection.
-     */
-    public async disconnect(): Promise<void> {
-        await this.dbClient.close();
-        console.log("Disconnected from MongoDB.");
-    }
-
-    /**
-     * Internal helper to retrieve a raw Meal document from MongoDB by its ID.
-     * @param mealId The unique ID of the meal.
-     * @returns The MongoDB document if found, otherwise null.
-     */
-    private async _getMealDocumentById(mealId: string): Promise<WithId<MealDocument> | null> {
-        return this.mealsCollection.findOne({ _id: mealId });
-    }
-
-    /**
-     * Internal helper to retrieve a fully hydrated `Meal` object from MongoDB by its ID.
-     * This involves fetching the document and then resolving the `User` object.
-     * @param mealId The unique ID of the meal.
-     * @returns The `Meal` object if found and owner resolved, otherwise undefined.
-     */
-    private async _getMealObjectById(mealId: string): Promise<Meal<U, F> | undefined> {
-        const doc = await this._getMealDocumentById(mealId);
-        if (!doc) return undefined;
-
-        const owner = await this.userResolver(doc.ownerId);
-        if (!owner) {
-            // Data inconsistency: ownerId in meal document refers to a non-existent user.
-            console.error(`Owner with ID ${doc.ownerId} not found for meal ${mealId}. Skipping hydration.`);
-            return undefined;
-        }
-        return Meal.fromDocument(doc, owner);
-    }
-
-    // --- Actions ---
-
-    /**
-     * Action: submit
-     * Purpose: Records a new meal entry.
-     *
-     * @param owner The user submitting the meal.
-     * @param at The time the meal was consumed.
-     * @param items An array of food items in the meal.
-     * @param notes Optional notes for the meal.
-     * @returns The newly created `Meal` object.
-     *
-     * Requires:
-     * - `owner` is a valid `User` object (not undefined/null, has an `id`).
-     * - `items` is nonempty.
-     *
-     * Effects:
-     * - Creates a new `Meal` instance with status `ACTIVE`.
-     * - Inserts the new meal's document into the MongoDB `Meals` collection.
-     *
-     * Throws:
-     * - Error: If `owner` is invalid or `items` is empty.
-     */
-    public async submit(owner: U, at: Date, items: F[], notes?: string): Promise<Meal<U, F>> {
-        // Requirements check handled by Meal.createNewMeal factory.
-        const newMeal = Meal.createNewMeal(owner, at, items, notes);
-        const mealDoc = newMeal.toDocument();
-
-        await this.mealsCollection.insertOne(mealDoc);
-
-        return newMeal;
-    }
-
-    /**
-     * Action: edit
-     * Purpose: Modifies an existing meal entry.
-     *
-     * @param caller The user attempting to edit the meal.
-     * @param mealId The unique ID of the meal to be edited.
-     * @param items Optional new array of food items.
-     * @param notes Optional new notes string.
-     * @returns A Promise that resolves when the meal is successfully edited.
-     *
-     * Requires:
-     * - `mealId` refers to an existing `Meal` document.
-     * - `caller` is the owner of the `meal` (compared by `id`).
-     * - `meal` status is `ACTIVE`.
-     * - If `items` is provided, it must be nonempty.
-     *
-     * Effects:
-     * - Updates the `items` and/or `notes` fields of the `Meal` document in MongoDB.
-     *
-     * Throws:
-     * - Error: If the meal does not exist, is not active, or updated items are empty.
-     * - PermissionError: If `caller` is not the owner of the meal.
-     */
-    public async edit(caller: U, mealId: string, items?: F[], notes?: string): Promise<void> {
-        // Requirements check
-        const mealDoc = await this._getMealDocumentById(mealId);
-        if (!mealDoc) {
-            throw new Error(`Meal with ID '${mealId}' does not exist.`);
-        }
-        // Compare users by their unique ID
-        if (mealDoc.ownerId !== caller.id) {
-            throw new PermissionError("Caller is not the owner of this meal.");
-        }
-        if (mealDoc.status !== MealStatus.ACTIVE) {
-            throw new Error(`Cannot edit a meal that is not active. Current status: ${mealDoc.status}`);
-        }
-        if (items !== undefined && items.length === 0) {
-            throw new Error("Items array cannot be empty when updating.");
-        }
-
-        // Effects
-        const updateFields: Partial<MealDocument> = {};
-        if (items !== undefined) {
-            updateFields.items = items;
-        }
-        if (notes !== undefined) {
-            updateFields.notes = notes;
-        }
-
-        if (Object.keys(updateFields).length > 0) {
-            await this.mealsCollection.updateOne(
-                { _id: mealId },
-                { $set: updateFields }
-            );
-        }
-    }
-
-    /**
-     * Action: delete
-     * Purpose: Marks a meal entry as deleted.
-     *
-     * @param caller The user attempting to delete the meal.
-     * @param mealId The unique ID of the meal to be deleted.
-     * @returns A Promise that resolves when the meal status is successfully updated.
-     *
-     * Requires:
-     * - `mealId` refers to an existing `Meal` document.
-     * - `caller` is the owner of the `meal` (compared by `id`).
-     * - `meal` status is `ACTIVE`.
-     *
-     * Effects:
-     * - Sets the `status` of the `Meal` document to `DELETED` in MongoDB.
-     *
-     * Throws:
-     * - Error: If the meal does not exist or is not active.
-     * - PermissionError: If `caller` is not the owner of the meal.
-     */
-    public async delete(caller: U, mealId: string): Promise<void> {
-        // Requirements check
-        const mealDoc = await this._getMealDocumentById(mealId);
-        if (!mealDoc) {
-            throw new Error(`Meal with ID '${mealId}' does not exist.`);
-        }
-        // Compare users by their unique ID
-        if (mealDoc.ownerId !== caller.id) {
-            throw new PermissionError("Caller is not the owner of this meal.");
-        }
-        if (mealDoc.status !== MealStatus.ACTIVE) {
-            throw new Error(`Cannot delete a meal that is not active. Current status: ${mealDoc.status}`);
-        }
-
-        // Effects
-        await this.mealsCollection.updateOne(
-            { _id: mealId },
-            { $set: { status: MealStatus.DELETED } }
-        );
-    }
-
-    // --- Utility Methods (not formal actions, but helpful for concept interaction) ---
-
-    /**
-     * Retrieves meals associated with a specific owner.
-     * @param ownerId The ID of the user whose meals are to be retrieved.
-     * @param includeDeleted If true, includes meals marked as deleted; otherwise, only active meals.
-     * @returns A Promise that resolves to an array of Meal objects owned by the specified user.
-     */
-    public async getMealsForOwner(ownerId: UserId, includeDeleted: boolean = false): Promise<Meal<U, F>[]> {
-        const query: Document = { ownerId: ownerId };
-        if (!includeDeleted) {
-            query.status = MealStatus.ACTIVE;
-        }
-
-        const mealDocs = await this.mealsCollection.find(query).toArray();
-        const meals: Meal<U, F>[] = [];
-
-        // For each meal document, try to resolve the owner and construct the Meal object
-        for (const doc of mealDocs) {
-            const owner = await this.userResolver(doc.ownerId);
-            if (owner) {
-                meals.push(Meal.fromDocument(doc, owner));
-            } else {
-                console.warn(`Owner with ID ${doc.ownerId} not found for meal ${doc._id}. Skipping meal.`);
-            }
-        }
-        return meals;
-    }
-
-    /**
-     * Retrieves a meal by its unique ID.
-     * @param mealId The unique ID of the meal to retrieve.
-     * @param callerId Optional. If provided, enforces that the caller is the owner of the meal.
-     *                 This helps restrict read access to user's own logs.
-     * @returns A Promise that resolves to the Meal object if found, otherwise undefined.
-     * @throws PermissionError if `callerId` is provided and does not match the meal's owner.
-     */
-    public async getMealById(mealId: string, callerId?: UserId): Promise<Meal<U, F> | undefined> {
-        const meal = await this._getMealObjectById(mealId);
-        if (meal && callerId && meal.owner.id !== callerId) {
-            // If a callerId is provided, and it doesn't match the owner, deny access.
-            // This implements the implied "only the user will be able to access their own meal logs" for read operations.
-            throw new PermissionError("Caller is not authorized to view this meal.");
-        }
-        return meal;
-    }
+  /**
+   * _getMealOwner (meal: Meal): (owner: User)
+   *
+   * **requires** A meal with the given ID exists.
+   * **effects** Returns the owner of the specified meal. Useful for authorization syncs.
+   */
+  async _getMealOwner({ meal }: { meal: Meal }): Promise<{ owner: User }[]> {
+    const doc = await this.meals.findOne({ _id: meal }, { projection: { owner: 1 } });
+    return doc ? [{ owner: doc.owner }] : [];
+  }
 }
 ```
