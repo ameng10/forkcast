@@ -1,29 +1,70 @@
-### Concept: PersonalQA [User, Fact, Question, Answer, Time]
+# concept: PersonalQA
+**concept** PersonalQA [User]
 
-**purpose** Answer a user’s food questions using their own meals, check-ins, and insights.
+**purpose** enable a user to get synthesized answers to questions based on a personal knowledge base of ingested facts
 
-**principle** The assistant maintains a private fact base of normalized statements (from meals, check-ins, insights, behavior changes) and answers questions by citing those facts.
+**principle** after a user ingests several facts about their activities, they can ask a question related to those facts and receive a synthesized answer that cites the relevant information
 
 **state**
+```
+a set of Facts with
+  an owner User
+  an at Date
+  a content String
+  a source of MEAL or CHECK_IN or INSIGHT or BEHAVIOR
 
-- A set of Facts with:
-    - owner: User
-    - at: Time
-    - content: Fact (e.g., “late_night + fried linked to lower energy (conf 0.82)”)
-    - source: String ("meal", "check_in", "insight", "behavior")
-- A set of QAs with:
-    - owner: User
-    - question: Question
-    - answer: Answer
-    - citedFacts: Set(Fact)
+a set of QAs with
+  an owner User
+  a question String
+  an answer String
+  a citedFacts set of Fact
+  an optional confidence Number
+  an at Date
+
+a set of Drafts with
+  an owner User
+  a question String
+  a raw String
+  a validated Flag
+  an at Date
+
+a Templates set of Users with
+  a name String
+  a text String
+```
 
 **actions**
 
-- `ingestFact(owner: User, at: Time, content: Fact, source: String)`
-    - **effects:** add a fact
-- `forgetFact(requester: User, owner: User, fact: Fact)`
-    - **requires:** fact exists for owner and requester = owner
-    - **effects:** remove the fact
-- `ask(requester: User, question: Question): (answer: Answer, citedFacts: Set(Fact))`
-    - **requires:** requester exists
-    - **effects:** produce an answer derived from requester’s Facts; store QA with owner = requester; return answer with citedFacts
+ingestFact (owner: User, at: Date, content: String, source: String): (fact: Fact)
+**requires** true
+**effects** creates a new Fact with the given properties, owned by `owner`; returns the new Fact's ID as `fact`
+
+forgetFact (requester: User, owner: User, factId: Fact): (ok: Flag) or (error: String)
+**requires** `requester` is the same as `owner`
+**effects** if the fact `factId` exists and its owner is `owner`, deletes the fact and returns `ok`; otherwise returns an error
+
+ask (requester: User, question: String): (qa: QA)
+**requires** true
+**effects** analyzes the `requester`'s existing facts to find those relevant to the `question`; creates a conservative summary as an answer; creates a new QA entry with the question, answer, and cited facts; returns the new QA's ID as `qa`
+
+askLLM (requester: User, question: String, optional k: Number): (qa: QA)
+**requires** true
+**effects** selects the `k` most recent facts for the `requester`; uses a user-specific or default template to generate a prompt for an external LLM; if an LLM is available, sends the prompt and records the response as the answer; creates a `Draft` to log the LLM interaction; if no LLM is available, generates a conservative summary as the answer; creates a new QA entry with the question, answer, and cited facts; returns the new QA's ID as `qa`
+
+setTemplate (requester: User, name: String, template: String): (ok: Flag)
+**requires** true
+**effects** creates or updates the LLM prompt template associated with the `requester`, setting its name and text; returns `ok`
+
+**queries**
+
+\_getUserFacts (owner: User): (facts: set of FactDoc)
+**requires** `owner` exists
+**effects** returns all facts for the given `owner`
+
+\_getUserQAs (owner: User): (qas: set of QADoc)
+**requires** `owner` exists
+**effects** returns all QAs for the given `owner`
+
+\_getUserDrafts (owner: User): (drafts: set of DraftDoc)
+**requires** `owner` exists
+**effects** returns all drafts for the given `owner`

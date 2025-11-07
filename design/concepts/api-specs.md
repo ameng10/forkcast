@@ -1,6 +1,6 @@
 [@api-extraction-from-code](../tools/api-extraction-from-code.md)
 
-
+[@api-extraction-from-spec](../tools/api-extraction-from-spec.md)
 # API Specification (Canonical Endpoints)
 Please extract an API for this app from the following 5 concepts.
 
@@ -38,6 +38,11 @@ Do not make up actions, use the actions from the code provided. The endpoints ar
   - Endpoint: POST /api/SwapSuggestions/accept
   - Endpoint: POST /api/SwapSuggestions/_getProposal
   - Endpoint: POST /api/SwapSuggestions/_getProposalsByOwner
+  - Endpoint: POST /api/UserAuthentication/register
+  - Endpoint: POST /api/UserAuthentication/login
+  - Endpoint: POST /api/UserAuthentication/logout
+  - Endpoint: POST /api/UserAuthentication/_isLoggedIn
+  - Endpoint: POST /api/UserAuthentication/_getUserByUsername
 
 ## PersonalQA
 
@@ -58,9 +63,6 @@ Code: [@MealLogImplementation](MealLog/MealLogImplementation.md)
 
 Code: [@SwapSuggestionsImplementation](SwapSuggestions/SwapSuggestionsImplementation.md)
 
-# response:
-
-# response:
 
 # API Specification: PersonalQA Concept
 
@@ -1201,6 +1203,195 @@ Code: [@SwapSuggestionsImplementation](SwapSuggestions/SwapSuggestionsImplementa
     "toMealSuggestion": "string",
     "status": "string",
     "owner": "UserID"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+Update the API Specification for UserAuthentication.
+
+## UserAuthentication
+Code: [@UserAuthenticationImplementation](UserAuthentication/UserAuthenticationImplementation.md)
+
+Specification: [@UserAuthentication](UserAuthentication/UserAuthentication.md)
+
+# response:
+
+
+# response:
+
+# API Specification: UserAuthentication Concept
+
+**Purpose:** To manage user accounts and sessions, including registration, login, and logout.
+
+***
+
+## API Endpoints
+
+### POST /api/UserAuthentication/register
+
+**Description:** Creates a new user account with a username and password.
+
+**Requirements:**
+- A user with the given `username` must not already exist.
+
+**Effects:**
+- A new user is created with the provided credentials.
+- Returns the ID of the newly created user.
+
+**Request Body:**
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "user": "UserID"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+### POST /api/UserAuthentication/login
+
+**Description:** Authenticates a user and starts a new session.
+
+**Requirements:**
+- A user with the given `username` must exist.
+- The provided `password` must match the user's stored password.
+
+**Effects:**
+- Creates a new session for the authenticated user.
+- Returns the user's ID and the new session ID.
+
+**Request Body:**
+```json
+{
+  "username": "string",
+  "password": "string"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{
+  "user": "UserID",
+  "session": "SessionID"
+}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+### POST /api/UserAuthentication/logout
+
+**Description:** Ends a user's session, logging them out.
+
+**Requirements:**
+- The `session` ID must correspond to an active session.
+
+**Effects:**
+- The specified session is invalidated and removed.
+
+**Request Body:**
+```json
+{
+  "session": "SessionID"
+}
+```
+
+**Success Response Body (Action):**
+```json
+{}
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+### POST /api/UserAuthentication/_isLoggedIn
+
+**Description:** Checks if a session ID is currently active and valid.
+
+**Requirements:**
+- The `session` ID must be provided.
+
+**Effects:**
+- Returns the user ID associated with the session if it is active.
+
+**Request Body:**
+```json
+{
+  "session": "SessionID"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "user": "UserID"
+  }
+]
+```
+
+**Error Response Body:**
+```json
+{
+  "error": "string"
+}
+```
+---
+
+### POST /api/UserAuthentication/_getUserByUsername
+
+**Description:** Retrieves a user's information by their username.
+
+**Requirements:**
+- A user with the given `username` must exist.
+
+**Effects:**
+- Returns the user record matching the username.
+
+**Request Body:**
+```json
+{
+  "username": "string"
+}
+```
+
+**Success Response Body (Query):**
+```json
+[
+  {
+    "_id": "UserID",
+    "username": "string"
   }
 ]
 ```
