@@ -47,5 +47,5 @@ UserAuthentication:
 
 - Design document: [design/design_doc.md](design_doc.md)
 - Reflection: [design/reflection.md](reflection.md)
-- Demo video: [LINK (replace with final URL)](https://example.com/your-demo-video)
+- Demo video: [video](https://youtu.be/MgaUKiX1xlA)
 - Demo action trace: [demo/demo_trace.md](demo_trace.md)
