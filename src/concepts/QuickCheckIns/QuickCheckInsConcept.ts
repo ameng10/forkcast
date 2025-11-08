@@ -34,6 +34,7 @@ interface CheckInDocument {
 interface InternalMetricDocument {
   // Note: The _id of InternalMetrics will be of type ExternalMetricID
   _id: ExternalMetricID;
+  owner: User;
   name: string;
 }
 
@@ -66,7 +67,10 @@ export default class QuickCheckInsConcept {
     },
   ): Promise<{ checkIn: CheckIn } | { error: string }> {
     // Requires: the InternalMetric 'metric' exists
-    const existingMetric = await this.internalMetrics.findOne({ _id: metric });
+    const existingMetric = await this.internalMetrics.findOne({
+      _id: metric,
+      owner,
+    });
     if (!existingMetric) {
       return { error: `Metric with ID '${metric}' is not defined.` };
     }
@@ -95,10 +99,13 @@ export default class QuickCheckInsConcept {
    * @effects create a new InternalMetric 'metric' with a fresh ID, set its name, and return its ID.
    */
   async defineMetric(
-    { name }: { name: string },
+    { owner, name }: { owner: User; name: string },
   ): Promise<{ metric: ExternalMetricID } | { error: string }> {
-    // Requires: no InternalMetric with 'name' exists
-    const existingMetric = await this.internalMetrics.findOne({ name: name });
+    // Requires: no InternalMetric with 'name' exists for this owner
+    const existingMetric = await this.internalMetrics.findOne({
+      owner,
+      name,
+    });
     if (existingMetric) {
       return {
         error:
@@ -110,6 +117,7 @@ export default class QuickCheckInsConcept {
     const newMetricId = freshID() as ExternalMetricID;
     const result = await this.internalMetrics.insertOne({
       _id: newMetricId,
+      owner,
       name: name,
     });
 
@@ -149,6 +157,7 @@ export default class QuickCheckInsConcept {
     if (metric !== undefined) {
       const existingMetric = await this.internalMetrics.findOne({
         _id: metric,
+        owner: existingCheckIn.owner,
       });
       if (!existingMetric) {
         return { error: `New metric with ID '${metric}' is not defined.` };
@@ -215,12 +224,15 @@ export default class QuickCheckInsConcept {
    * @effects permanently remove the InternalMetric document.
    */
   async deleteMetric(
-    { metric }: { metric: ExternalMetricID },
-  ): Promise<Empty | { error: string }> {
+    { requester, metric }: { requester: User; metric: ExternalMetricID },
+  ): Promise<{ deleted: true } | { error: string }> {
     // Requires: metric exists
     const existing = await this.internalMetrics.findOne({ _id: metric });
     if (!existing) {
       return { error: `Metric with ID '${metric}' not found.` };
+    }
+    if (existing.owner !== requester) {
+      return { error: "You do not own this metric." };
     }
     // Requires: no CheckIn documents reference it
     const inUse = await this.checkIns.findOne({ metric });
@@ -236,7 +248,7 @@ export default class QuickCheckInsConcept {
     if (res.deletedCount !== 1) {
       return { error: "Failed to delete metric." };
     }
-    return {};
+    return { deleted: true };
   }
 
   // --- Queries ---
@@ -259,9 +271,9 @@ export default class QuickCheckInsConcept {
    * @effects Returns an array containing a single metric document if found, otherwise an empty array.
    */
   async _getMetricsByName(
-    { name }: { name: string },
+    { owner, name }: { owner: User; name: string },
   ): Promise<InternalMetricDocument[]> {
-    const doc = await this.internalMetrics.findOne({ name });
+    const doc = await this.internalMetrics.findOne({ owner, name });
     return doc ? [doc] : [];
   }
 
@@ -284,8 +296,6 @@ export default class QuickCheckInsConcept {
   async _listMetricsForOwner(
     { owner }: { owner: User },
   ): Promise<InternalMetricDocument[]> {
-    // Metrics are not scoped per user yet, but the owner argument allows callers to pass-through their identity.
-    void owner;
-    return await this.internalMetrics.find({}).toArray();
+    return await this.internalMetrics.find({ owner }).toArray();
   }
 }

@@ -2,29 +2,52 @@ import { actions, Frames, Sync } from "@engine";
 import { QuickCheckIns, Requesting, Sessioning } from "@concepts";
 
 const AUTH_ERROR = "Authentication failed: Invalid or expired session.";
+const buildListResponse = (
+  frames: Frames,
+  listSymbol: symbol,
+  entries: Iterable<unknown>,
+) => {
+  const baseFrame = frames[0] ?? {};
+  const asArray = Array.isArray(entries) ? entries : Array.from(entries);
+  return new Frames({ ...baseFrame, [listSymbol]: asArray });
+};
 
-const normalizeOwnerBinding = (
-  { owner, ownerId, ownerFromUser, ownerFromUid, ownerFromRequester }: {
-    owner: symbol;
-    ownerId: symbol;
-    ownerFromUser: symbol;
-    ownerFromUid: symbol;
-    ownerFromRequester: symbol;
-  },
+const collectCheckIns = (
+  { owner, checkIns }: { owner: symbol; checkIns: symbol },
 ) =>
-(frames: Frames): Frames => {
-  const normalized = new Frames();
-  for (const frame of frames) {
-    const resolvedOwner =
-      frame[owner] ?? frame[ownerId] ?? frame[ownerFromUser] ??
-      frame[ownerFromUid] ?? frame[ownerFromRequester];
-    if (!resolvedOwner) continue;
-    normalized.push({
-      ...frame,
-      [owner]: resolvedOwner,
-    });
-  }
-  return normalized;
+async (frames: Frames): Promise<Frames> => {
+  if (frames.length === 0) return frames;
+  const ownerValue = frames[0][owner];
+  if (ownerValue === undefined) return new Frames();
+  const docs = await QuickCheckIns._listCheckInsByOwner({ owner: ownerValue });
+  return buildListResponse(frames, checkIns, docs);
+};
+
+const collectMetrics = (
+  { owner, metrics }: { owner: symbol; metrics: symbol },
+) =>
+async (frames: Frames): Promise<Frames> => {
+  if (frames.length === 0) return frames;
+  const ownerValue = frames[0][owner];
+  if (ownerValue === undefined) return new Frames();
+  const docs = await QuickCheckIns._listMetricsForOwner({ owner: ownerValue });
+  return buildListResponse(frames, metrics, docs);
+};
+
+const ensureSession = (
+  { session, user }: { session: symbol; user: symbol },
+) =>
+async (frames: Frames): Promise<Frames> => {
+  frames = await frames.query(Sessioning._getUser, { session }, { user });
+  return frames.filter(($) => $[user] !== undefined);
+};
+
+const sessionFailure = (
+  { session, error }: { session: symbol; error: symbol },
+) =>
+async (frames: Frames): Promise<Frames> => {
+  frames = await frames.query(Sessioning._getUser, { session }, { error });
+  return frames.filter(($) => $[error] !== undefined);
 };
 
 // --- Record a Check-In ---
@@ -37,8 +60,7 @@ export const RecordCheckInRequest: Sync = (
     { path: "/QuickCheckIns/record", session, at, metric, value },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: async (frames) => await ensureSession({ session, user })(frames),
   then: actions([QuickCheckIns.record, { owner: user, at, metric, value }]),
 });
 
@@ -83,9 +105,8 @@ export const DefineMetricRequest: Sync = (
     { path: "/QuickCheckIns/defineMetric", session, name },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([QuickCheckIns.defineMetric, { name }]),
+  where: async (frames) => await ensureSession({ session, user })(frames),
+  then: actions([QuickCheckIns.defineMetric, { owner: user, name }]),
 });
 
 export const DefineMetricResponseSuccess: Sync = ({ request, metric }) => ({
@@ -104,24 +125,31 @@ export const DefineMetricResponseError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-export const DefineMetricAuthFailure: Sync = ({ request, session, user }) => ({
+export const DefineMetricAuthFailure: Sync = ({ request, session, error }) => ({
   when: actions([
     Requesting.request,
     { path: "/QuickCheckIns/defineMetric", session },
     { request },
   ]),
-  where: async (frames) => {
-    const userFrames = await frames.query(Sessioning._getUser, { session }, {
-      user,
-    });
-    return userFrames.length === 0 ? frames : new Frames();
-  },
+  where: sessionFailure({ session, error }),
   then: actions([Requesting.respond, { request, error: AUTH_ERROR }]),
 });
 
 // --- Edit a Check-In ---
 
-export const EditCheckInRequest: Sync = (
+export const EditCheckInValueRequest: Sync = (
+  { request, session, user, checkIn, value },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/QuickCheckIns/edit", session, checkIn, value },
+    { request },
+  ]),
+  where: async (frames) => await ensureSession({ session, user })(frames),
+  then: actions([QuickCheckIns.edit, { owner: user, checkIn, value }]),
+});
+
+export const EditCheckInMetricAndValueRequest: Sync = (
   { request, session, user, checkIn, metric, value },
 ) => ({
   when: actions([
@@ -129,9 +157,20 @@ export const EditCheckInRequest: Sync = (
     { path: "/QuickCheckIns/edit", session, checkIn, metric, value },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: async (frames) => await ensureSession({ session, user })(frames),
   then: actions([QuickCheckIns.edit, { owner: user, checkIn, metric, value }]),
+});
+
+export const EditCheckInMetricOnlyRequest: Sync = (
+  { request, session, user, checkIn, metric },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/QuickCheckIns/edit", session, checkIn, metric },
+    { request },
+  ]),
+  where: async (frames) => await ensureSession({ session, user })(frames),
+  then: actions([QuickCheckIns.edit, { owner: user, checkIn, metric }]),
 });
 
 export const EditCheckInResponseSuccess: Sync = ({ request }) => ({
@@ -175,8 +214,7 @@ export const DeleteCheckInRequest: Sync = (
     { path: "/QuickCheckIns/delete", session, checkIn },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: async (frames) => await ensureSession({ session, user })(frames),
   then: actions([QuickCheckIns.delete, { owner: user, checkIn }]),
 });
 
@@ -221,15 +259,14 @@ export const DeleteMetricRequest: Sync = (
     { path: "/QuickCheckIns/deleteMetric", session, metric },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([QuickCheckIns.deleteMetric, { metric }]),
+  where: async (frames) => await ensureSession({ session, user })(frames),
+  then: actions([QuickCheckIns.deleteMetric, { requester: user, metric }]),
 });
 
-export const DeleteMetricResponseSuccess: Sync = ({ request }) => ({
+export const DeleteMetricResponseSuccess: Sync = ({ request, deleted }) => ({
   when: actions(
     [Requesting.request, { path: "/QuickCheckIns/deleteMetric" }, { request }],
-    [QuickCheckIns.deleteMetric, {}, {}],
+    [QuickCheckIns.deleteMetric, {}, { deleted }],
   ),
   then: actions([Requesting.respond, { request, success: true }]),
 });
@@ -242,119 +279,102 @@ export const DeleteMetricResponseError: Sync = ({ request, error }) => ({
   then: actions([Requesting.respond, { request, error }]),
 });
 
-export const DeleteMetricAuthFailure: Sync = ({ request, session, user }) => ({
+export const DeleteMetricAuthFailure: Sync = ({ request, session, error }) => ({
   when: actions([
     Requesting.request,
     { path: "/QuickCheckIns/deleteMetric", session },
     { request },
   ]),
-  where: async (frames) => {
-    const userFrames = await frames.query(Sessioning._getUser, { session }, {
-      user,
-    });
-    return userFrames.length === 0 ? frames : new Frames();
-  },
+  where: sessionFailure({ session, error }),
   then: actions([Requesting.respond, { request, error: AUTH_ERROR }]),
 });
 
 // --- Legacy Queries (owner-based) ---
 
-export const ListCheckInsByOwnerLegacyRequest: Sync = (
-  {
-    request,
-    owner,
-    ownerId,
-    ownerFromUser,
-    ownerFromUid,
-    ownerFromRequester,
-    checkIn,
-    checkIns,
-  },
+// --- List Check-Ins by Owner (session-based) ---
+export const ListCheckInsSessionRequest: Sync = (
+  { request, session, user, checkIns },
 ) => ({
   when: actions([
     Requesting.request,
-    {
-      path: "/QuickCheckIns/_listCheckInsByOwner",
-      owner,
-      ownerId,
-      user: ownerFromUser,
-      uid: ownerFromUid,
-      requester: ownerFromRequester,
-    },
+    { path: "/QuickCheckIns/_listCheckInsByOwner", session },
     { request },
   ]),
   where: async (frames) => {
-    frames = normalizeOwnerBinding({
-      owner,
-      ownerId,
-      ownerFromUser,
-      ownerFromUid,
-      ownerFromRequester,
-    })(frames);
-    if (frames.length === 0) return frames;
-
-    const checkInFrames = await frames.query(
-      QuickCheckIns._listCheckInsByOwner,
-      { owner },
-      { checkIn },
-    );
-
-    if (checkInFrames.length === 0) {
-      const responseFrame = { ...frames[0], [checkIns]: [] };
-      return new Frames(responseFrame);
-    }
-
-    return checkInFrames.collectAs([checkIn], checkIns);
+    frames = await ensureSession({ session, user })(frames);
+    return collectCheckIns({ owner: user, checkIns })(frames);
   },
   then: actions([Requesting.respond, { request, checkIns }]),
 });
 
-export const ListMetricsForOwnerLegacyRequest: Sync = (
-  {
-    request,
-    owner,
-    ownerId,
-    ownerFromUser,
-    ownerFromUid,
-    ownerFromRequester,
-    metric,
-    metrics,
-  },
+export const ListCheckInsSessionAuthFailure: Sync = (
+  { request, session, error },
 ) => ({
   when: actions([
     Requesting.request,
-    {
-      path: "/QuickCheckIns/_listMetricsForOwner",
-      owner,
-      ownerId,
-      user: ownerFromUser,
-      uid: ownerFromUid,
-      requester: ownerFromRequester,
-    },
+    { path: "/QuickCheckIns/_listCheckInsByOwner", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: AUTH_ERROR }]),
+});
+
+// --- List Metrics for Owner (session-based) ---
+export const ListMetricsSessionRequest: Sync = (
+  { request, session, user, metrics },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/QuickCheckIns/_listMetricsForOwner", session },
     { request },
   ]),
   where: async (frames) => {
-    frames = normalizeOwnerBinding({
-      owner,
-      ownerId,
-      ownerFromUser,
-      ownerFromUid,
-      ownerFromRequester,
-    })(frames);
-    if (frames.length === 0) return frames;
-
-    const metricFrames = await frames.query(
-      QuickCheckIns._listMetricsForOwner,
-      { owner },
-      { metric },
-    );
-
-    if (metricFrames.length === 0) {
-      const responseFrame = { ...frames[0], [metrics]: [] };
-      return new Frames(responseFrame);
-    }
-
-    return metricFrames.collectAs([metric], metrics);
+    frames = await ensureSession({ session, user })(frames);
+    return collectMetrics({ owner: user, metrics })(frames);
   },
   then: actions([Requesting.respond, { request, metrics }]),
+});
+
+export const ListMetricsSessionAuthFailure: Sync = (
+  { request, session, error },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/QuickCheckIns/_listMetricsForOwner", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: AUTH_ERROR }]),
+});
+
+// --- Get Metrics by Name (session-based) ---
+export const GetMetricsByNameSessionRequest: Sync = (
+  { request, session, user, name, metrics },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/QuickCheckIns/_getMetricsByName", session, name },
+    { request },
+  ]),
+  where: async (frames) => {
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
+    const ownerValue = frames[0][user];
+    if (ownerValue === undefined) return new Frames();
+    const docs = await QuickCheckIns._getMetricsByName({ owner: ownerValue, name });
+    return buildListResponse(frames, metrics, docs);
+  },
+  then: actions([Requesting.respond, { request, metrics }]),
+});
+
+export const GetMetricsByNameSessionAuthFailure: Sync = (
+  { request, session, error },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/QuickCheckIns/_getMetricsByName", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: AUTH_ERROR }]),
 });

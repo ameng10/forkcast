@@ -42,17 +42,6 @@ export const inclusions: Record<string, string> = {
 
 export const exclusions: Array<string> = [
   // Feel free to delete these example exclusions
-  "/api/LikertSurvey/createSurvey",
-  "/api/LikertSurvey/addQuestion",
-
-  // InsightMining
-  "/api/InsightMining/ingest",
-  "/api/InsightMining/analyze",
-  "/api/InsightMining/summarize",
-  "/api/InsightMining/deactivate",
-  "/api/InsightMining/_getObservationsForUser",
-  "/api/InsightMining/_getInsightsForUser",
-  "/api/InsightMining/_getReport",
 
   // MealLog (updated routes with underscores per server output)
   "/api/MealLog/submit",
@@ -81,12 +70,7 @@ export const exclusions: Array<string> = [
   "/api/QuickCheckIns/_getCheckIn",
   "/api/QuickCheckIns/_getMetricsByName",
   "/api/QuickCheckIns/_listCheckInsByOwner",
-
-  // SwapSuggestions
-  "/api/SwapSuggestions/propose",
-  "/api/SwapSuggestions/accept",
-  "/api/SwapSuggestions/_getProposal",
-  "/api/SwapSuggestions/_getProposalsByOwner",
+  "/api/QuickCheckIns/_listMetricsForOwner",
 
   // Sessioning (route via syncs)
   "/api/Sessioning/create",

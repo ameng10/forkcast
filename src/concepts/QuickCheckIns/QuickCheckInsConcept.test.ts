@@ -15,6 +15,7 @@ Deno.test("Principle: A user logs outcomes (check-ins) for metrics, and the conc
     // 1. Define internal metrics (e.g., energy, mood)
     console.log("Defining 'Energy' metric...");
     const defineEnergyMetricResult = await concept.defineMetric({
+      owner: userAlice,
       name: "Energy",
     });
     assertNotEquals(
@@ -28,7 +29,10 @@ Deno.test("Principle: A user logs outcomes (check-ins) for metrics, and the conc
     assertExists(energyMetricId, "Energy metric ID should be returned.");
 
     console.log("Defining 'Mood' metric...");
-    const defineMoodMetricResult = await concept.defineMetric({ name: "Mood" });
+    const defineMoodMetricResult = await concept.defineMetric({
+      owner: userAlice,
+      name: "Mood",
+    });
     assertNotEquals(
       "error" in defineMoodMetricResult,
       true,
@@ -132,7 +136,10 @@ Deno.test("Action: defineMetric - success and requirements enforcement", async (
   try {
     // Test Case 1: Success - Define a new metric
     console.log("Attempting to define a new metric 'Sleep Quality'...");
-    const result1 = await concept.defineMetric({ name: "Sleep Quality" });
+    const result1 = await concept.defineMetric({
+      owner: userAlice,
+      name: "Sleep Quality",
+    });
     assertNotEquals(
       "error" in result1,
       true,
@@ -143,6 +150,7 @@ Deno.test("Action: defineMetric - success and requirements enforcement", async (
 
     // Verify the metric exists
     const retrievedMetric = await concept._getMetricsByName({
+      owner: userAlice,
       name: "Sleep Quality",
     });
     assertExists(
@@ -162,7 +170,10 @@ Deno.test("Action: defineMetric - success and requirements enforcement", async (
 
     // Test Case 2: Requires - No InternalMetric with 'name' exists (attempt to define duplicate)
     console.log("Attempting to define 'Sleep Quality' again (should fail)...");
-    const result2 = await concept.defineMetric({ name: "Sleep Quality" });
+    const result2 = await concept.defineMetric({
+      owner: userAlice,
+      name: "Sleep Quality",
+    });
     assertEquals(
       "error" in result2,
       true,
@@ -186,7 +197,9 @@ Deno.test("Action: record - success and requirements enforcement", async () => {
     // Setup: Define a valid metric for testing
     console.log("Defining 'Hunger' metric for recording tests...");
     const { metric: hungerMetricId } =
-      (await concept.defineMetric({ name: "Hunger" })) as { metric: ID };
+      (await concept.defineMetric({ owner: userAlice, name: "Hunger" })) as {
+        metric: ID;
+      };
     const now = new Date();
 
     // Test Case 1: Success - Record a valid check-in
@@ -263,10 +276,14 @@ Deno.test("Action: edit - requirements enforcement (non-existent check-in, unaut
   try {
     // Setup: Define metrics and record an initial check-in for Alice
     console.log("Setup: Defining initial and updated metrics...");
-    const { metric: initialMetric } =
-      (await concept.defineMetric({ name: "InitialMetric" })) as { metric: ID };
-    const { metric: _updatedMetric } =
-      (await concept.defineMetric({ name: "UpdatedMetric" })) as { metric: ID };
+    const { metric: initialMetric } = (await concept.defineMetric({
+      owner: userAlice,
+      name: "InitialMetric",
+    })) as { metric: ID };
+    const { metric: _updatedMetric } = (await concept.defineMetric({
+      owner: userAlice,
+      name: "UpdatedMetric",
+    })) as { metric: ID };
     const { checkIn: checkInId } = (await concept.record({
       owner: userAlice,
       at: new Date(),
@@ -347,9 +364,13 @@ Deno.test("Action: edit - effects verification (update value, update metric, upd
       "Setup: Defining metrics and initial check-in for edit effects tests...",
     );
     const { metric: metricA } =
-      (await concept.defineMetric({ name: "MetricA" })) as { metric: ID };
+      (await concept.defineMetric({ owner: userAlice, name: "MetricA" })) as {
+        metric: ID;
+      };
     const { metric: metricB } =
-      (await concept.defineMetric({ name: "MetricB" })) as { metric: ID };
+      (await concept.defineMetric({ owner: userAlice, name: "MetricB" })) as {
+        metric: ID;
+      };
     const { checkIn: checkInId } = (await concept.record({
       owner: userAlice,
       at: new Date(),
@@ -460,27 +481,35 @@ Deno.test("Queries: _getCheckIn, _getMetricsByName, _listCheckInsByOwner functio
 
   try {
     // Setup: Define multiple metrics and record check-ins for multiple users
-    const { metric: energyId } =
-      (await concept.defineMetric({ name: "Energy" })) as { metric: ID };
-    const { metric: focusId } =
-      (await concept.defineMetric({ name: "Focus" })) as { metric: ID };
+    const { metric: energyAliceId } =
+      (await concept.defineMetric({ owner: userAlice, name: "Energy" })) as {
+        metric: ID;
+      };
+    const { metric: focusAliceId } =
+      (await concept.defineMetric({ owner: userAlice, name: "Focus" })) as {
+        metric: ID;
+      };
+    const { metric: energyBobId } =
+      (await concept.defineMetric({ owner: userBob, name: "Energy" })) as {
+        metric: ID;
+      };
 
     const checkIn1Alice = (await concept.record({
       owner: userAlice,
       at: new Date("2023-03-01T08:00:00Z"),
-      metric: energyId,
+      metric: energyAliceId,
       value: 7,
     })) as { checkIn: ID };
     const checkIn2Alice = (await concept.record({
       owner: userAlice,
       at: new Date("2023-03-01T10:00:00Z"),
-      metric: focusId,
+      metric: focusAliceId,
       value: 6,
     })) as { checkIn: ID };
     const checkIn1Bob = (await concept.record({
       owner: userBob,
       at: new Date("2023-03-01T09:00:00Z"),
-      metric: energyId,
+      metric: energyBobId,
       value: 5,
     })) as { checkIn: ID };
 
@@ -512,6 +541,7 @@ Deno.test("Queries: _getCheckIn, _getMetricsByName, _listCheckInsByOwner functio
     // Query: _getMetricsByName
     console.log("Querying for metric 'Energy' by name...");
     const retrievedEnergyMetric = await concept._getMetricsByName({
+      owner: userAlice,
       name: "Energy",
     });
     assertExists(
@@ -520,12 +550,13 @@ Deno.test("Queries: _getCheckIn, _getMetricsByName, _listCheckInsByOwner functio
     );
     assertEquals(
       retrievedEnergyMetric._id,
-      energyId,
+      energyAliceId,
       "Retrieved Energy metric ID should match.",
     );
 
     console.log("Querying for a non-existent metric by name...");
     const nonExistentMetric = await concept._getMetricsByName({
+      owner: userAlice,
       name: "NonExistentMetric",
     });
     assertEquals(
@@ -583,19 +614,24 @@ Deno.test("Action: delete - success, non-owner, and missing check-in", async () 
 
   try {
     // Setup: define a metric and create two check-ins for Alice and Bob
-    const { metric } = (await concept.defineMetric({ name: "TempMetric" })) as {
-      metric: ID;
-    };
+    const { metric: aliceMetric } = (await concept.defineMetric({
+      owner: userAlice,
+      name: "TempMetric",
+    })) as { metric: ID };
+    const { metric: bobMetric } = (await concept.defineMetric({
+      owner: userBob,
+      name: "TempMetric",
+    })) as { metric: ID };
     const { checkIn: aliceCheckIn } = (await concept.record({
       owner: userAlice,
       at: new Date("2025-10-30T10:00:00Z"),
-      metric,
+      metric: aliceMetric,
       value: 3,
     })) as { checkIn: ID };
     const { checkIn: bobCheckIn } = (await concept.record({
       owner: userBob,
       at: new Date("2025-10-30T11:00:00Z"),
-      metric,
+      metric: bobMetric,
       value: 6,
     })) as { checkIn: ID };
 
@@ -645,7 +681,10 @@ Deno.test("Action: deleteMetric prevents delete when in use and succeeds when un
 
   try {
     // Create a metric and a check-in referencing it
-    const { metric } = (await concept.defineMetric({ name: "ToDelete" })) as {
+    const { metric } = (await concept.defineMetric({
+      owner: userAlice,
+      name: "ToDelete",
+    })) as {
       metric: ID;
     };
     const _ci = await concept.record({
@@ -656,17 +695,17 @@ Deno.test("Action: deleteMetric prevents delete when in use and succeeds when un
     });
 
     // Attempt to delete while in use
-    const blocked = await concept.deleteMetric({ metric });
+    const blocked = await concept.deleteMetric({ requester: userAlice, metric });
     assertEquals("error" in blocked, true);
 
     // Remove referencing check-in, then delete metric
     const { checkIn } = (await concept.record({
-      owner: userBob,
+      owner: userAlice,
       at: new Date("2025-10-30T13:00:00Z"),
       metric,
       value: 2,
     })) as { checkIn: ID };
-    await concept.delete({ checkIn, owner: userBob });
+    await concept.delete({ checkIn, owner: userAlice });
     // Also ensure previous check-in is removed to free the metric
     const allAlice = await concept._listCheckInsByOwner({ owner: userAlice });
     for (const c of allAlice) {
@@ -675,7 +714,7 @@ Deno.test("Action: deleteMetric prevents delete when in use and succeeds when un
       }
     }
 
-    const ok = await concept.deleteMetric({ metric });
+    const ok = await concept.deleteMetric({ requester: userAlice, metric });
     assertEquals("error" in ok, false);
   } finally {
     await client.close();

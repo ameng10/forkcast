@@ -1,5 +1,32 @@
-import { actions, Sync } from "@engine";
+import { actions, Frames, Sync } from "@engine";
 import { PersonalQA, Requesting, Sessioning } from "@concepts";
+
+const SESSION_AUTH_ERROR = "Invalid or expired session.";
+
+const ensureSession = (
+  { session, user }: { session: symbol; user: symbol },
+) =>
+async (frames: Frames): Promise<Frames> => {
+  frames = await frames.query(Sessioning._getUser, { session }, { user });
+  return frames.filter(($) => $[user] !== undefined);
+};
+
+const sessionFailure = (
+  { session, error }: { session: symbol; error: symbol },
+) =>
+async (frames: Frames): Promise<Frames> => {
+  frames = await frames.query(Sessioning._getUser, { session }, { error });
+  return frames.filter(($) => $[error] !== undefined);
+};
+
+const buildListResponse = (
+  frames: Frames,
+  listSymbol: symbol,
+  items: unknown[],
+) => {
+  const base = frames[0] ?? {};
+  return new Frames({ ...base, [listSymbol]: items });
+};
 
 // --- Ingest Fact ---
 
@@ -11,12 +38,21 @@ export const IngestFactRequest: Sync = (
     { path: "/PersonalQA/ingestFact", session, at, content, source },
     { request },
   ]),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: ensureSession({ session, user }),
   then: actions([
     PersonalQA.ingestFact,
     { owner: user, at, content, source },
   ]),
+});
+
+export const IngestFactAuthFailure: Sync = ({ request, session, error }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PersonalQA/ingestFact", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });
 
 export const IngestFactResponse: Sync = ({ request, fact }) => ({
@@ -39,8 +75,7 @@ export const ForgetFactRequest: Sync = (
       { request },
     ],
   ),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: ensureSession({ session, user }),
   then: actions([PersonalQA.forgetFact, {
     requester: user,
     owner: user,
@@ -72,8 +107,7 @@ export const AskRequest: Sync = ({ request, session, user, question }) => ({
       request,
     }],
   ),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: ensureSession({ session, user }),
   then: actions([PersonalQA.ask, { requester: user, question }]),
 });
 
@@ -88,18 +122,17 @@ export const AskResponse: Sync = ({ request, qa }) => ({
 // --- Ask LLM ---
 
 export const AskLLMRequest: Sync = (
-  { request, session, user, question, k },
+  { request, session, user, question },
 ) => ({
   when: actions(
     [
       Requesting.request,
-      { path: "/PersonalQA/askLLM", session, question, k },
+      { path: "/PersonalQA/askLLM", session, question },
       { request },
     ],
   ),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
-  then: actions([PersonalQA.askLLM, { requester: user, question, k }]),
+  where: ensureSession({ session, user }),
+  then: actions([PersonalQA.askLLM, { requester: user, question }]),
 });
 
 export const AskLLMResponse: Sync = ({ request, qa }) => ({
@@ -122,8 +155,7 @@ export const SetTemplateRequest: Sync = (
       { request },
     ],
   ),
-  where: async (frames) =>
-    await frames.query(Sessioning._getUser, { session }, { user }),
+  where: ensureSession({ session, user }),
   then: actions([PersonalQA.setTemplate, { requester: user, name, template }]),
 });
 
@@ -141,56 +173,245 @@ export const GetUserFactsRequest: Sync = (
   { request, session, user, facts },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "/PersonalQA/facts", session }, { request }],
+    [
+      Requesting.request,
+      { path: "/PersonalQA/facts", session },
+      { request },
+    ],
   ),
   where: async (frames) => {
-    const userFrames = await frames.query(Sessioning._getUser, { session }, {
-      user,
-    });
-    if (userFrames.length === 0) return userFrames;
-    return await userFrames.query(
-      PersonalQA._getUserFacts,
-      { owner: user },
-      { facts },
-    );
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
+    const ownerValue = frames[0][user];
+    if (ownerValue === undefined) return new Frames();
+    const docs = await PersonalQA._getUserFacts({ owner: ownerValue });
+    return buildListResponse(frames, facts, docs);
   },
   then: actions([Requesting.respond, { request, facts }]),
 });
 
-export const GetUserQAsRequest: Sync = ({ request, session, user, qas }) => ({
+export const GetUserFactsAuthFailure: Sync = (
+  { request, session, error },
+) => ({
   when: actions(
-    [Requesting.request, { path: "/PersonalQA/qas", session }, { request }],
+    [
+      Requesting.request,
+      { path: "/PersonalQA/facts", session },
+      { request },
+    ],
+  ),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+export const GetUserFactsRequestLegacy: Sync = (
+  { request, session, user, facts },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/_getUserFacts", session },
+      { request },
+    ],
   ),
   where: async (frames) => {
-    const userFrames = await frames.query(Sessioning._getUser, { session }, {
-      user,
-    });
-    if (userFrames.length === 0) return userFrames;
-    return await userFrames.query(
-      PersonalQA._getUserQAs,
-      { owner: user },
-      { qas },
-    );
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
+    const ownerValue = frames[0][user];
+    if (ownerValue === undefined) return new Frames();
+    const docs = await PersonalQA._getUserFacts({ owner: ownerValue });
+    return buildListResponse(frames, facts, docs);
+  },
+  then: actions([Requesting.respond, { request, facts }]),
+});
+
+export const GetUserFactsAuthFailureLegacy: Sync = (
+  { request, session, error },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/_getUserFacts", session },
+      { request },
+    ],
+  ),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+export const GetUserQAsRequest: Sync = ({ request, session, user, qas }) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/qas", session },
+      { request },
+    ],
+  ),
+  where: async (frames) => {
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
+    const ownerValue = frames[0][user];
+    if (ownerValue === undefined) return new Frames();
+    const docs = await PersonalQA._getUserQAs({ owner: ownerValue });
+    return buildListResponse(frames, qas, docs);
   },
   then: actions([Requesting.respond, { request, qas }]),
+});
+
+export const GetUserQAsAuthFailure: Sync = (
+  { request, session, error },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/qas", session },
+      { request },
+    ],
+  ),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+export const GetUserQAsRequestLegacy: Sync = (
+  { request, session, user, qas },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/_getUserQAs", session },
+      { request },
+    ],
+  ),
+  where: async (frames) => {
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
+    const ownerValue = frames[0][user];
+    if (ownerValue === undefined) return new Frames();
+    const docs = await PersonalQA._getUserQAs({ owner: ownerValue });
+    return buildListResponse(frames, qas, docs);
+  },
+  then: actions([Requesting.respond, { request, qas }]),
+});
+
+export const GetUserQAsAuthFailureLegacy: Sync = (
+  { request, session, error },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/_getUserQAs", session },
+      { request },
+    ],
+  ),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });
 
 export const GetUserDraftsRequest: Sync = (
   { request, session, user, drafts },
 ) => ({
   when: actions(
-    [Requesting.request, { path: "/PersonalQA/drafts", session }, { request }],
+    [
+      Requesting.request,
+      { path: "/PersonalQA/drafts", session },
+      { request },
+    ],
   ),
   where: async (frames) => {
-    const userFrames = await frames.query(Sessioning._getUser, { session }, {
-      user,
-    });
-    if (userFrames.length === 0) return userFrames;
-    return await userFrames.query(
-      PersonalQA._getUserDrafts,
-      { owner: user },
-      { drafts },
-    );
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
+    const ownerValue = frames[0][user];
+    if (ownerValue === undefined) return new Frames();
+    const docs = await PersonalQA._getUserDrafts({ owner: ownerValue });
+    return buildListResponse(frames, drafts, docs);
   },
   then: actions([Requesting.respond, { request, drafts }]),
+});
+
+export const GetUserDraftsAuthFailure: Sync = (
+  { request, session, error },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/drafts", session },
+      { request },
+    ],
+  ),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+export const GetUserDraftsRequestLegacy: Sync = (
+  { request, session, user, drafts },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/_getUserDrafts", session },
+      { request },
+    ],
+  ),
+  where: async (frames) => {
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
+    const ownerValue = frames[0][user];
+    if (ownerValue === undefined) return new Frames();
+    const docs = await PersonalQA._getUserDrafts({ owner: ownerValue });
+    return buildListResponse(frames, drafts, docs);
+  },
+  then: actions([Requesting.respond, { request, drafts }]),
+});
+
+export const GetUserDraftsAuthFailureLegacy: Sync = (
+  { request, session, error },
+) => ({
+  when: actions(
+    [
+      Requesting.request,
+      { path: "/PersonalQA/_getUserDrafts", session },
+      { request },
+    ],
+  ),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+export const ForgetFactAuthFailure: Sync = ({ request, session, error }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PersonalQA/forgetFact", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+export const AskAuthFailure: Sync = ({ request, session, error }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PersonalQA/ask", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+export const AskLLMAuthFailure: Sync = ({ request, session, error }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PersonalQA/askLLM", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+export const SetTemplateAuthFailure: Sync = ({ request, session, error }) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/PersonalQA/setTemplate", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });

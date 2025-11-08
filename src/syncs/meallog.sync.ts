@@ -2,6 +2,7 @@ import { actions, Frames, Sync } from "@engine";
 import { MealLog, Requesting, Sessioning } from "@concepts";
 
 const SESSION_AUTH_ERROR = "Invalid or expired session.";
+const SESSION_REQUIRED_ERROR = "Session is required for this action.";
 
 const ensureSession = (
   { session, user }: { session: symbol; user: symbol },
@@ -44,11 +45,25 @@ const buildMealsResponse = (
 };
 
 const collectMeals = (
-  { owner, mealDoc, meals }: { owner: symbol; mealDoc: symbol; meals: symbol },
+  { owner, mealDoc, meals, includeDeleted }: {
+    owner: symbol;
+    mealDoc: symbol;
+    meals: symbol;
+    includeDeleted?: symbol;
+  },
 ) =>
 async (frames: Frames): Promise<Frames> => {
   if (frames.length === 0) return frames;
-  const mealFrames = await frames.query(MealLog._getMealsByOwner, { owner }, {
+  if (includeDeleted) {
+    frames = frames.map((frame) => ({
+      ...frame,
+      [includeDeleted]: frame[includeDeleted] ?? false,
+    }));
+  }
+  const queryInput = includeDeleted
+    ? { owner, includeDeleted }
+    : { owner };
+  const mealFrames = await frames.query(MealLog._getMealsByOwner, queryInput, {
     meal: mealDoc,
   });
   const docs = mealFrames.map(($) => $[mealDoc]);
@@ -92,26 +107,18 @@ export const SubmitMealSessionAuthFailure: Sync = (
   then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });
 
-export const SubmitMealOwnerRequest: Sync = (
-  { request, owner, at, items, notes },
+export const SubmitMealMissingSessionResponse: Sync = (
+  { request, owner },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/MealLog/submit", owner, at, items, notes },
+    { path: "/MealLog/submit", owner },
     { request },
   ]),
-  then: actions([MealLog.submit, { owner, at, items, notes }]),
-});
-
-export const SubmitMealOwnerRequestNoNotes: Sync = (
-  { request, owner, at, items },
-) => ({
-  when: actions([
-    Requesting.request,
-    { path: "/MealLog/submit", owner, at, items },
-    { request },
-  ]),
-  then: actions([MealLog.submit, { owner, at, items }]),
+  then: actions([Requesting.respond, {
+    request,
+    error: SESSION_REQUIRED_ERROR,
+  }]),
 });
 
 export const SubmitMealResponseSuccess: Sync = (
@@ -145,6 +152,18 @@ export const EditMealSessionRequest: Sync = (
   then: actions([MealLog.edit, { caller: user, meal, at, items, notes }]),
 });
 
+export const EditMealSessionRequestNoNotes: Sync = (
+  { request, session, user, meal, at, items, owner },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/MealLog/edit", session, meal, at, items },
+    { request },
+  ]),
+  where: ensureSessionWithOwnership({ session, user, meal, owner }),
+  then: actions([MealLog.edit, { caller: user, meal, at, items }]),
+});
+
 export const EditMealSessionAuthFailure: Sync = (
   { request, session, error },
 ) => ({
@@ -157,15 +176,32 @@ export const EditMealSessionAuthFailure: Sync = (
   then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });
 
-export const EditMealOwnerRequest: Sync = (
-  { request, owner, meal, at, items, notes },
+export const EditMealMissingSessionResponseCaller: Sync = (
+  { request, caller },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/MealLog/edit", owner, meal, at, items, notes },
+    { path: "/MealLog/edit", caller },
     { request },
   ]),
-  then: actions([MealLog.edit, { caller: owner, meal, at, items, notes }]),
+  then: actions([Requesting.respond, {
+    request,
+    error: SESSION_REQUIRED_ERROR,
+  }]),
+});
+
+export const EditMealMissingSessionResponseOwner: Sync = (
+  { request, owner },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/MealLog/edit", owner },
+    { request },
+  ]),
+  then: actions([Requesting.respond, {
+    request,
+    error: SESSION_REQUIRED_ERROR,
+  }]),
 });
 
 export const EditMealResponseSuccess: Sync = ({ request }) => ({
@@ -209,15 +245,32 @@ export const DeleteMealSessionAuthFailure: Sync = (
   then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });
 
-export const DeleteMealOwnerRequest: Sync = (
-  { request, owner, meal },
+export const DeleteMealMissingSessionResponseCaller: Sync = (
+  { request, caller },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/MealLog/delete", owner, meal },
+    { path: "/MealLog/delete", caller },
     { request },
   ]),
-  then: actions([MealLog.delete, { caller: owner, meal }]),
+  then: actions([Requesting.respond, {
+    request,
+    error: SESSION_REQUIRED_ERROR,
+  }]),
+});
+
+export const DeleteMealMissingSessionResponseOwner: Sync = (
+  { request, owner },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/MealLog/delete", owner },
+    { request },
+  ]),
+  then: actions([Requesting.respond, {
+    request,
+    error: SESSION_REQUIRED_ERROR,
+  }]),
 });
 
 export const DeleteMealResponseSuccess: Sync = ({ request }) => ({
@@ -264,36 +317,46 @@ export const GetMealsSessionAuthFailure: Sync = (
   then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });
 
-// --- Get Meals by Owner ---
-export const GetMealsByOwnerRequest: Sync = (
-  { request, owner, includeDeleted, mealDoc, meals },
+// --- Get Meals by Owner (session-protected legacy path) ---
+export const GetMealsByOwnerSessionRequest: Sync = (
+  { request, session, user, includeDeleted, mealDoc, meals },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/MealLog/_getMealsByOwner", owner, includeDeleted },
+    { path: "/MealLog/_getMealsByOwner", session, includeDeleted },
     { request },
   ]),
   where: async (frames) => {
-    const mealFrames = await frames.query(MealLog._getMealsByOwner, {
-      owner,
-      includeDeleted,
-    }, { meal: mealDoc });
-    const docs = mealFrames.map(($) => $[mealDoc]);
-    return buildMealsResponse(frames, meals, docs);
+    frames = await ensureSession({ session, user })(frames);
+    return collectMeals({ owner: user, mealDoc, meals, includeDeleted })(frames);
   },
   then: actions([Requesting.respond, { request, meals }]),
 });
 
-// --- Get Meal by ID ---
-export const GetMealByIdRequest: Sync = (
-  { request, meal, mealDoc },
+export const GetMealsByOwnerSessionAuthFailure: Sync = (
+  { request, session, error },
 ) => ({
   when: actions([
     Requesting.request,
-    { path: "/MealLog/_getMealById", meal },
+    { path: "/MealLog/_getMealsByOwner", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
+});
+
+// --- Get Meal by ID (session-protected) ---
+export const GetMealByIdSessionRequest: Sync = (
+  { request, session, user, meal, mealDoc },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/MealLog/_getMealById", session, meal },
     { request },
   ]),
   where: async (frames) => {
+    frames = await ensureSession({ session, user })(frames);
+    if (frames.length === 0) return frames;
     const mealFrames = await frames.query(MealLog._getMealById, { meal }, {
       meal: mealDoc,
     });
@@ -301,7 +364,27 @@ export const GetMealByIdRequest: Sync = (
       const responseFrame = { ...frames[0], [mealDoc]: null };
       return new Frames(responseFrame);
     }
-    return mealFrames;
+    const authorized = mealFrames.filter(($) => {
+      const doc = $[mealDoc] as { owner?: unknown } | undefined;
+      return doc && doc.owner === $[user];
+    });
+    if (authorized.length === 0) {
+      const responseFrame = { ...frames[0], [mealDoc]: null };
+      return new Frames(responseFrame);
+    }
+    return authorized;
   },
   then: actions([Requesting.respond, { request, meal: mealDoc }]),
+});
+
+export const GetMealByIdSessionAuthFailure: Sync = (
+  { request, session, error },
+) => ({
+  when: actions([
+    Requesting.request,
+    { path: "/MealLog/_getMealById", session },
+    { request },
+  ]),
+  where: sessionFailure({ session, error }),
+  then: actions([Requesting.respond, { request, error: SESSION_AUTH_ERROR }]),
 });
