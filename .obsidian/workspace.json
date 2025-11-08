@@ -11,10 +11,14 @@
             "id": "15b82e147f4d6b86",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "design/design_doc.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "New tab"
+              "title": "design_doc"
             }
           }
         ]
@@ -168,6 +172,10 @@
   },
   "active": "15b82e147f4d6b86",
   "lastOpenFiles": [
+    "design/concepts/api-specs.md",
+    "design/brainstorming/meallogsync.md",
+    "design/design_doc.md",
+    "design/brainstorming/syncs.md",
     "deno.lock",
     "src/syncs/quickcheckins.sync.ts",
     "src/syncs/personalqa.sync.ts",
@@ -181,11 +189,9 @@
     "design/concepts/Sessioning/Sessioning.md",
     "design/concepts/Sessioning",
     "design/brainstorming/userauthenticationsync.md",
-    "design/brainstorming/syncs.md",
     "design/brainstorming/syncs-example.md",
     "design/brainstorming/quickcheckinssync.md",
     "design/brainstorming/personalqasync.md",
-    "design/brainstorming/meallogsync.md",
     "design/brainstorming/insightminingsync.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/response.53f79d13.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/implement.60724fb4.md",
@@ -201,9 +207,7 @@
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/_.6f2ac641.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/_.40872180.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/_.3eb68380.md",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/concepts/api-specs.md/steps/_.3c84f982.md",
     "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/syncs.md/steps",
-    "context/Users/anthonymeng10/Desktop/forkcast/design/brainstorming/quickcheckinssync.md/steps",
     "Untitled.canvas"
   ]
 }
